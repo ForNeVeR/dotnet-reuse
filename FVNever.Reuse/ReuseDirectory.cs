@@ -10,8 +10,20 @@ using TruePath;
 
 namespace FVNever.Reuse;
 
+/// <summary>
+/// Provides high-level operations for scanning a directory and extracting REUSE licensing information
+/// from files, sidecar <c>.license</c> files, and DEP-5 metadata.
+/// </summary>
 public static class ReuseDirectory
 {
+    /// <summary>
+    /// Reads all REUSE entries discoverable within the specified directory.
+    /// </summary>
+    /// <param name="directory">Absolute path to the base directory to scan.</param>
+    /// <returns>
+    /// A task that produces a list of <see cref="ReuseFileEntry"/> values. Each entry corresponds to a file
+    /// for which licensing information was found in-place, in a sidecar <c>.license</c> file, or via a matching DEP-5 stanza.
+    /// </returns>
     public static async Task<List<ReuseFileEntry>> ReadEntries(AbsolutePath directory)
     {
         var allFiles = await EnumerateFiles(directory).ConfigureAwait(false);

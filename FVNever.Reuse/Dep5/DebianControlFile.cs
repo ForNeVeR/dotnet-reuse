@@ -4,9 +4,25 @@
 
 namespace FVNever.Reuse.Dep5;
 
+/// <summary>
+/// <para>Represents a Debian control-format file (DEP-5) consisting of a sequence of stanzas (sections).</para>
+/// <para>See more in <a href="https://www.debian.org/doc/debian-policy/ch-controlfields.html">the relevant documentation</a>.</para>
+/// </summary>
+/// <remarks>
+/// This parser is intentionally minimal and focuses on the subset of the Debian copyright
+/// format required by the REUSE workflows. Comment lines starting with <c>#</c> are ignored, empty
+/// lines separate stanzas, and lines starting with a space are treated as continuations of the previous
+/// field value as per the Debian control-file conventions.
+/// </remarks>
 public class DebianControlFile(List<Stanza> stanzas)
 {
     private static readonly char[] Separator = [':'];
+
+    /// <summary>
+    /// Reads and parses a Debian control-format file (DEP-5) from the provided text stream.
+    /// </summary>
+    /// <param name="stream">A <see cref="StreamReader"/> positioned at the beginning of a DEP-5 file.</param>
+    /// <returns>A task that produces a <see cref="DebianControlFile"/> instance with parsed stanzas.</returns>
     public static async Task<DebianControlFile> Read(StreamReader stream)
     {
         var text = await stream.ReadToEndAsync().ConfigureAwait(false);
@@ -65,5 +81,8 @@ public class DebianControlFile(List<Stanza> stanzas)
         return new DebianControlFile(stanzas);
     }
 
+    /// <summary>
+    /// The list of parsed stanzas in the order they appeared in the file.
+    /// </summary>
     public List<Stanza> Stanzas = stanzas;
 }

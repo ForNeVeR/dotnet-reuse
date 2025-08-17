@@ -8,6 +8,12 @@ using TruePath;
 
 namespace FVNever.Reuse;
 
+/// <summary>
+/// Represents REUSE metadata collected for a single file, including license identifiers and copyright statements.
+/// </summary>
+/// <param name="Path">The absolute path to the file the entry refers to.</param>
+/// <param name="LicenseIdentifiers">A list of SPDX license identifiers associated with the file.</param>
+/// <param name="CopyrightStatements">A list of copyright statements associated with the file.</param>
 public record ReuseFileEntry(
     AbsolutePath Path,
     ImmutableArray<string> LicenseIdentifiers,
@@ -96,6 +102,12 @@ public record ReuseFileEntry(
         return (licenses, copyrights);
     }
 
+    /// <summary>
+    /// Combines multiple <see cref="ReuseFileEntry"/> values into a single set by preserving relative order and removing duplicates.
+    /// </summary>
+    /// <param name="baseDirectory">The directory to calculate relative ordering of files for deterministic output.</param>
+    /// <param name="entries">A sequence of entries to combine.</param>
+    /// <returns>A combined entry with de-duplicated license identifiers and copyright statements.</returns>
     public static ReuseCombinedEntry CombineEntries(AbsolutePath baseDirectory, IEnumerable<ReuseFileEntry> entries)
     {
         var licenses = new List<string>();
@@ -114,6 +126,11 @@ public record ReuseFileEntry(
     // REUSE-IgnoreEnd
 }
 
+/// <summary>
+/// Represents a combined view of REUSE metadata after merging multiple file entries.
+/// </summary>
+/// <param name="LicenseIdentifiers">De-duplicated SPDX license identifiers in their combined order.</param>
+/// <param name="CopyrightStatements">De-duplicated copyright statements in their combined order.</param>
 public record ReuseCombinedEntry(
     ImmutableArray<string> LicenseIdentifiers,
     ImmutableArray<string> CopyrightStatements
