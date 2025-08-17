@@ -1,20 +1,30 @@
 <!--
-SPDX-FileCopyrightText: 2025 Friedrich von Never <friedrich@fornever.me>
+SPDX-FileCopyrightText: 2024-2025 Friedrich von Never <friedrich@fornever.me>
 
 SPDX-License-Identifier: MIT
 -->
 
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-      <PackageDescription>.NET library to interact with license information in REUSE-compliant sources.</PackageDescription>
-      <IsPackable>true</IsPackable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <PackageDescription>.NET library to interact with license information in REUSE-compliant sources.</PackageDescription>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\DebianControlFileSpec\DebianControlFileSpec.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="GitignoreParserNet" Version="0.2.0.14" />
+        <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="9.0.3" />
+        <PackageReference Include="TruePath" Version="1.6.0" />
+    </ItemGroup>
 
 </Project>
