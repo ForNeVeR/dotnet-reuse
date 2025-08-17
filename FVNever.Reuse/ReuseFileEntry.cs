@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 Friedrich von Never <friedrich@fornever.me>
+// SPDX-FileCopyrightText: 2024-2025 Friedrich von Never <friedrich@fornever.me>
 //
 // SPDX-License-Identifier: MIT
 
@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 using TruePath;
 
-namespace ReuseSpec;
+namespace FVNever.Reuse;
 
 public record ReuseFileEntry(
     AbsolutePath Path,

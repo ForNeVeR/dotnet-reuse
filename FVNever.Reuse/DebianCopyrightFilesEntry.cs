@@ -1,11 +1,11 @@
-// SPDX-FileCopyrightText: 2024 Friedrich von Never <friedrich@fornever.me>
+// SPDX-FileCopyrightText: 2024-2025 Friedrich von Never <friedrich@fornever.me>
 //
 // SPDX-License-Identifier: MIT
 
-using DebianControlFileSpec;
+using FVNever.Reuse.Dep5;
 using Microsoft.Extensions.FileSystemGlobbing;
 
-namespace ReuseSpec;
+namespace FVNever.Reuse;
 
 internal record DebianCopyrightFilesEntry(
     Matcher Matcher,

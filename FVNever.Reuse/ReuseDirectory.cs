@@ -1,14 +1,14 @@
-// SPDX-FileCopyrightText: 2024 Friedrich von Never <friedrich@fornever.me>
+// SPDX-FileCopyrightText: 2024-2025 Friedrich von Never <friedrich@fornever.me>
 //
 // SPDX-License-Identifier: MIT
 
 using System.Text;
-using DebianControlFileSpec;
+using FVNever.Reuse.Dep5;
 using GitignoreParserNet;
 using Microsoft.Extensions.FileSystemGlobbing;
 using TruePath;
 
-namespace ReuseSpec;
+namespace FVNever.Reuse;
 
 public static class ReuseDirectory
 {
