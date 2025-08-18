@@ -14,7 +14,7 @@ namespace FVNever.Reuse.Dep5;
 /// lines separate stanzas, and lines starting with a space are treated as continuations of the previous
 /// field value as per the Debian control-file conventions.
 /// </remarks>
-public class DebianControlFile(List<Stanza> stanzas)
+internal class DebianControlFile(List<Stanza> stanzas)
 {
     private static readonly char[] Separator = [':'];
 
