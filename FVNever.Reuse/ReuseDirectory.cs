@@ -54,9 +54,9 @@ public static class ReuseDirectory
             allFiles = Directory.EnumerateFiles(directory.Value, "*", SearchOption.AllDirectories)
                 .Select(x => new AbsolutePath(x));
         }
-        else // TODO[#46]: Support nested .gitignore files on parent/child levels
+        else // TODO[#19]: Support nested .gitignore files on parent/child levels
         {
-            // TODO[#46]: Currently, this could filter out files that are in .gitignore but are explicitly added.
+            // TODO[#20]: Currently, this could filter out files that are in .gitignore but are explicitly added.
             var (accepted, _) = GitignoreParser.Parse(gitIgnorePath.Value, Encoding.UTF8);
             allFiles = accepted
                 .Where(x => !x.EndsWith("/"))
@@ -69,7 +69,7 @@ public static class ReuseDirectory
             .Where(file => !new LocalPath(gitDirectory).IsPrefixOf(file)
                            && !file.FileName.EndsWith(".license")
                            && file.FileName != "LICENSE.txt"
-                           && file.Parent?.FileName != "LICENSES") // TODO[#46]: Verify with the spec
+                           && file.Parent?.FileName != "LICENSES") // TODO[#21]: Verify with the spec
             .ToList();
     }
 

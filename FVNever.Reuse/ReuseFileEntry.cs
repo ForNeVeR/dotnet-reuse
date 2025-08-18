@@ -28,8 +28,8 @@ public record ReuseFileEntry(
 
         using var stream = File.OpenText(file.Value);
 
-        // TODO[#46]: Support snippets as well
-        // TODO[#46]: Support SPDX contributor info
+        // TODO[#22]: Support snippets as well
+        // TODO[#23]: Support SPDX contributor info
 
         var text = await stream.ReadToEndAsync();
         var lines = text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
@@ -47,7 +47,7 @@ public record ReuseFileEntry(
 
     private static IEnumerable<string> FilterIgnoredBlocks(IEnumerable<string> input)
     {
-        var ignoring = false;  // TODO[#46]: Should we support nested ignore/unignore blocks?
+        var ignoring = false;  // TODO[#24]: Should we support nested ignore/unignore blocks?
         foreach (var line in input)
         {
             if (line.Contains("REUSE-IgnoreStart"))
@@ -79,7 +79,7 @@ public record ReuseFileEntry(
 
     private static (List<string> Licenses, List<string> Copyrights) CollectStatements(IEnumerable<string> lines)
     {
-        // TODO[#46]: Support inverted comment markers, see https://github.com/fsfe/reuse-tool/issues/343
+        // TODO[#25]: Support inverted comment markers, see https://github.com/fsfe/reuse-tool/issues/343
         var licenses = new List<string>();
         var copyrights = new List<string>();
         foreach (var line in lines)
