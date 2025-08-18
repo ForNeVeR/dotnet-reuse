@@ -8,6 +8,14 @@ dotnet-reuse [![Status Zero][status-zero]][andivionian-status-classifier] [![FVN
 ========
 dotnet-reuse is a .NET library to interact with license information in [REUSE][reuse]-compliant sources.
 
+It parses all the sources of the REUSE information and provides it per file in your repository.
+
+See [the API reference][docs] for more details and examples.
+
+Installation
+------------
+[Install][nuget] the package from nuget.org.
+
 Documentation
 -------------
 - [Project Documentation Site (API Reference)][docs]

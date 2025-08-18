@@ -5,7 +5,7 @@
                 {
                     "src": "..",
                     "files": [
-                        "Reuse/Reuse.csproj"
+                        "FVNever.Reuse/FVNever.Reuse.csproj"
                     ]
                 }
             ],

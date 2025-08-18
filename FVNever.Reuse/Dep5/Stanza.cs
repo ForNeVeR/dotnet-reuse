@@ -8,7 +8,7 @@ namespace FVNever.Reuse.Dep5;
 /// Represents a single stanza (section) in a Debian control-format file.
 /// Each stanza is a collection of key/value fields in their original order.
 /// </summary>
-public class Stanza
+internal class Stanza
 {
     /// <summary>
     /// The fields of the stanza as a list of key/value tuples in the order they were parsed.
