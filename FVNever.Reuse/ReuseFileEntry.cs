@@ -4,7 +4,9 @@
 
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
+using FVNever.Reuse.Commenters;
 using TruePath;
+using TruePath.SystemIo;
 
 namespace FVNever.Reuse;
 
@@ -71,7 +73,7 @@ public record ReuseFileEntry(
 
     // REUSE-IgnoreStart
 
-    private static readonly Regex[] CopyrightPatterns = [
+    internal static readonly Regex[] CopyrightPatterns = [
         new(@"SPDX-(?:File|Snippet)CopyrightText:\s*(.*)"),
         new(@"Copyright\s?(?:\([Cc]\))\s+(.*)"),
         new(@"©\s+(.*)")
@@ -102,6 +104,25 @@ public record ReuseFileEntry(
         return (licenses, copyrights);
     }
 
+    /// <summary>Update the file REUSE headers with the data from this object, replacing the existing headers.</summary>
+    /// <remarks>
+    /// <para>
+    ///     Note that this method guarantees correct updates only for quite strict formats of metadata — mostly for the
+    ///     data it has saved itself.
+    /// </para>
+    /// <para>
+    ///     For any data format that is not strict (e.g., additional comments, additional letters, additional empty
+    ///     lines, metadata not at the very beginning of the file, etc.), it does the best effort of preserving the
+    ///     existing data in the file, but will require manual review of the changes applied.
+    /// </para>
+    /// </remarks>
+    public async Task UpdateFileContents(ICommenter? commenter = null)
+    {
+        commenter ??= DefaultCommenters.Guess(Path);
+        var newContent = await GenerateContent(commenter);
+        await Path.WriteAllTextAsync(newContent);
+    }
+
     /// <summary>
     /// Combines multiple <see cref="ReuseFileEntry"/> values into a single set by preserving relative order and removing duplicates.
     /// </summary>
@@ -121,6 +142,13 @@ public record ReuseFileEntry(
         }
 
         return new ReuseCombinedEntry([..licenses], [..copyrights]);
+    }
+
+    private async Task<string> GenerateContent(ICommenter commenter)
+    {
+        var currentContent = await Path.ReadAllTextAsync();
+        return commenter.GenerateHeader(CopyrightStatements, LicenseIdentifiers) +
+               commenter.RemoveHeader(currentContent);
     }
 
     // REUSE-IgnoreEnd

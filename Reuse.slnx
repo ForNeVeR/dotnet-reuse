@@ -38,5 +38,6 @@
     <File Path="global.json" />
     <File Path="global.json.license" />
   </Folder>
+  <Project Path="FVNever.Reuse.Tests\FVNever.Reuse.Tests.csproj" Type="Classic C#" />
   <Project Path="FVNever.Reuse\FVNever.Reuse.csproj" Type="Classic C#" />
 </Solution>
