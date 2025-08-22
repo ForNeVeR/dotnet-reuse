@@ -61,6 +61,28 @@ public class UpdateFileTests
         """);
 
     [Fact]
+    public Task UpdateCssFile() => DoTest(
+        "",
+        x => new ReuseFileEntry(x / "file.css", ["MIT"], ["Friedrich von Never <friedrich@fornever.me>"]),
+        """
+        /*
+        SPDX-FileCopyrightText: Friedrich von Never <friedrich@fornever.me>
+
+        SPDX-License-Identifier: MIT
+        */
+        """);
+
+    [Fact]
+    public Task UpdateSqlFile() => DoTest(
+        "",
+        x => new ReuseFileEntry(x / "file.sql", ["MIT"], ["Friedrich von Never <friedrich@fornever.me>"]),
+        """
+        -- SPDX-FileCopyrightText: Friedrich von Never <friedrich@fornever.me>
+        --
+        -- SPDX-License-Identifier: MIT
+        """);
+
+    [Fact]
     public Task UpdateTextFile() => DoTest(
         "",
         x => new ReuseFileEntry(x / "file.txt", ["MIT"], ["Friedrich von Never <friedrich@fornever.me>"]),

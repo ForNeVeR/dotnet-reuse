@@ -13,9 +13,25 @@ internal static class DefaultCommenters
     {
         return path.GetExtensionWithoutDot() switch
         {
-            "cs" => new CStyleCommenter(),
+            "conf" => new HashCommenter(),
+            "cs" => new CPlusPlusStyleCommenter(),
+            "css" => new CStyleCommenter(),
+            "dockerfile" => new HashCommenter(),
+            "dockerignore" => new HashCommenter(),
+            "editorconfig" => new HashCommenter(),
+            "env" => new HashCommenter(),
+            "gitignore" => new HashCommenter(),
+            "html" => new XmlCommenter(),
+            "md" => new XmlCommenter(),
+            "plugins" => new HashCommenter(), // https://www.playframework.com/documentation/2.3.4/ScalaPlugins
+            "properties" => new HashCommenter(),
             "ps1" => new HashCommenter(),
+            "sbt" => new CPlusPlusStyleCommenter(),
+            "scala" => new CPlusPlusStyleCommenter(),
+            "sql" => new DoubleDashCommenter(),
+            "svg" => new XmlCommenter(),
             "xml" => new XmlCommenter(),
+            "yml" => new HashCommenter(),
             _ => new PlainTextCommenter()
         };
     }
@@ -112,7 +128,7 @@ internal class PlainTextCommenter : CommenterBase
     protected override string LinePrefix => "";
 }
 
-internal class CStyleCommenter : CommenterBase
+internal class CPlusPlusStyleCommenter : CommenterBase
 {
     protected override string LinePrefix => "// ";
 }
@@ -120,6 +136,18 @@ internal class CStyleCommenter : CommenterBase
 internal class HashCommenter : CommenterBase
 {
     protected override string LinePrefix => "# ";
+}
+
+internal class DoubleDashCommenter : CommenterBase
+{
+    protected override string LinePrefix => "-- ";
+}
+
+internal class CStyleCommenter : CommenterBase
+{
+    protected override string CommentStartLine => "/*";
+    protected override string LinePrefix => "";
+    protected override string CommentEndLine => "*/";
 }
 
 internal class XmlCommenter : CommenterBase
