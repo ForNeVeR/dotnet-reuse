@@ -118,9 +118,28 @@ public record ReuseFileEntry(
     /// </remarks>
     public async Task UpdateFileContents(ICommenter? commenter = null)
     {
-        commenter ??= DefaultCommenters.Guess(Path);
-        var newContent = await GenerateContent(commenter);
-        await Path.WriteAllTextAsync(newContent);
+        if (await IsBinaryFile())
+        {
+            if (Path.GetExtensionWithoutDot() == "license")
+            {
+                throw new Exception(
+                    $"Invalid request: file \"{Path}\" is detected as binary. Cannot update the metadata.");
+            }
+
+            var licenseFile = Path.WithExtension($"{Path.GetExtensionWithDot()}.license");
+            await UpdateFileContents(
+                licenseFile,
+                LicenseIdentifiers,
+                CopyrightStatements,
+                new PlainTextCommenter());
+            return;
+        }
+
+        await UpdateFileContents(
+            Path,
+            LicenseIdentifiers,
+            CopyrightStatements,
+            commenter ?? DefaultCommenters.Guess(Path));
     }
 
     /// <summary>
@@ -144,11 +163,36 @@ public record ReuseFileEntry(
         return new ReuseCombinedEntry([..licenses], [..copyrights]);
     }
 
-    private async Task<string> GenerateContent(ICommenter commenter)
+    private async Task<bool> IsBinaryFile()
     {
-        var currentContent = await Path.ReadAllTextAsync();
-        return commenter.GenerateHeader(CopyrightStatements, LicenseIdentifiers) +
-               commenter.RemoveHeader(currentContent);
+        // TODO: Improve this detection: read only first several kibibytes of the file.
+        var data = await Path.ReadAllBytesAsync();
+        return data.Any(x => x == 0);
+    }
+
+    private static async Task UpdateFileContents(
+        AbsolutePath path,
+        IEnumerable<string> licenseIdentifiers,
+        IEnumerable<string> copyrightStatements,
+        ICommenter commenter)
+    {
+        var newContent = await GenerateContent(path, licenseIdentifiers, copyrightStatements, commenter);
+        await path.WriteAllTextAsync(newContent);
+    }
+
+    private static async Task<string> GenerateContent(
+        AbsolutePath path,
+        IEnumerable<string> licenseIdentifiers,
+        IEnumerable<string> copyrightStatements,
+        ICommenter commenter)
+    {
+        var header = commenter.GenerateHeader(copyrightStatements, licenseIdentifiers);
+        if (!path.Exists())
+        {
+            return header;
+        }
+        var currentContent = await path.ReadAllTextAsync();
+        return header + commenter.RemoveHeader(currentContent);
     }
 
     // REUSE-IgnoreEnd
