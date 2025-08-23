@@ -104,7 +104,13 @@ public record ReuseFileEntry(
         return (licenses, copyrights);
     }
 
-    /// <summary>Update the file REUSE headers with the data from this object, replacing the existing headers.</summary>
+    /// <summary>
+    /// <para>Update the file REUSE headers with the data from this object, replacing the existing headers.</para>
+    /// <para>
+    ///     This method will try to detect binary files, and automatically put the metadata for them into the
+    ///     corresponding <c>.license</c> files.
+    /// </para>
+    /// </summary>
     /// <remarks>
     /// <para>
     ///     Note that this method guarantees correct updates only for quite strict formats of metadata — mostly for the
