@@ -1,5 +1,5 @@
 let licenseHeader = """
-# SPDX-FileCopyrightText: 2024-2025 Friedrich von Never <friedrich@fornever.me>
+# SPDX-FileCopyrightText: 2024-2026 Friedrich von Never <friedrich@fornever.me>
 #
 # SPDX-License-Identifier: MIT
 
@@ -48,6 +48,7 @@ let workflows = [
     workflow "main" [
         name "Main"
         onPushTo "main"
+        onPushTo "renovate/**"
         onPullRequestTo "main"
         onSchedule "0 0 * * 6"
         onWorkflowDispatch
@@ -126,6 +127,7 @@ let workflows = [
     workflow "release" [
         name "Release"
         onPushTo "main"
+        onPushTo "renovate/**"
         onPushTags "v*"
         onPullRequestTo "main"
         onSchedule "0 0 * * 6"
