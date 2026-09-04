@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: 2024-2025 Friedrich von Never <friedrich@fornever.me>
+// SPDX-FileCopyrightText: 2024-2026 Friedrich von Never <friedrich@fornever.me>
 //
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 using FVNever.Reuse.Commenters;
+using JetBrains.Annotations;
 using TruePath;
 using TruePath.SystemIo;
 
@@ -19,7 +20,7 @@ namespace FVNever.Reuse;
 public record ReuseFileEntry(
     AbsolutePath Path,
     ImmutableArray<string> LicenseIdentifiers,
-    ImmutableArray<string> CopyrightStatements)
+    ImmutableArray<CopyrightStatement> CopyrightStatements)
 {
     /// <summary>Reads the REUSE information exclusively from the provided file.</summary>
     /// <remarks>Note it doesn't look into DEP5 or <c>.license</c> file.</remarks>
@@ -79,11 +80,11 @@ public record ReuseFileEntry(
         new(@"©\s+(.*)")
     ];
 
-    private static (List<string> Licenses, List<string> Copyrights) CollectStatements(IEnumerable<string> lines)
+    private static (List<string> Licenses, List<CopyrightStatement> Copyrights) CollectStatements(IEnumerable<string> lines)
     {
         // TODO[#25]: Support inverted comment markers, see https://github.com/fsfe/reuse-tool/issues/343
         var licenses = new List<string>();
-        var copyrights = new List<string>();
+        var copyrights = new List<CopyrightStatement>();
         foreach (var line in lines)
         {
             if (line.Contains("SPDX-License-Identifier:"))
@@ -97,7 +98,7 @@ public record ReuseFileEntry(
                 var match = pattern.Match(line);
                 if (!match.Success) continue;
 
-                copyrights.Add(match.Groups[1].Value);
+                copyrights.Add(new CopyrightStatement(match.Groups[1].Value));
             }
         }
 
@@ -157,9 +158,9 @@ public record ReuseFileEntry(
     public static ReuseCombinedEntry CombineEntries(AbsolutePath baseDirectory, IEnumerable<ReuseFileEntry> entries)
     {
         var licenses = new List<string>();
-        var copyrights = new List<string>();
+        var copyrights = new List<CopyrightStatement>();
         var licenseHash = new HashSet<string>();
-        var copyrightHash = new HashSet<string>();
+        var copyrightHash = new HashSet<CopyrightStatement>();
         foreach (var entry in entries.OrderBy(x => ((LocalPath)x.Path).RelativeTo(baseDirectory).Value))
         {
             licenses.AddRange(entry.LicenseIdentifiers.Where(license => licenseHash.Add(license)));
@@ -179,7 +180,7 @@ public record ReuseFileEntry(
     private static async Task UpdateFileContents(
         AbsolutePath path,
         IEnumerable<string> licenseIdentifiers,
-        IEnumerable<string> copyrightStatements,
+        IEnumerable<CopyrightStatement> copyrightStatements,
         ICommenter commenter)
     {
         var newContent = await GenerateContent(path, licenseIdentifiers, copyrightStatements, commenter);
@@ -189,7 +190,7 @@ public record ReuseFileEntry(
     private static async Task<string> GenerateContent(
         AbsolutePath path,
         IEnumerable<string> licenseIdentifiers,
-        IEnumerable<string> copyrightStatements,
+        IEnumerable<CopyrightStatement> copyrightStatements,
         ICommenter commenter)
     {
         var header = commenter.GenerateHeader(copyrightStatements, licenseIdentifiers);
@@ -209,7 +210,8 @@ public record ReuseFileEntry(
 /// </summary>
 /// <param name="LicenseIdentifiers">De-duplicated SPDX license identifiers in their combined order.</param>
 /// <param name="CopyrightStatements">De-duplicated copyright statements in their combined order.</param>
+[PublicAPI]
 public record ReuseCombinedEntry(
     ImmutableArray<string> LicenseIdentifiers,
-    ImmutableArray<string> CopyrightStatements
+    ImmutableArray<CopyrightStatement> CopyrightStatements
 );

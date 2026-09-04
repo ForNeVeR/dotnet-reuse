@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Friedrich von Never <friedrich@fornever.me>
+// SPDX-FileCopyrightText: 2025-2026 Friedrich von Never <friedrich@fornever.me>
 //
 // SPDX-License-Identifier: MIT
 
@@ -12,7 +12,9 @@ namespace FVNever.Reuse.Tests;
 public class UpdateFileTests
 {
     private static readonly ImmutableArray<string> Licenses = ["MIT"];
-    private static readonly ImmutableArray<string> Contributors = ["Friedrich von Never <friedrich@fornever.me>"];
+    private static readonly ImmutableArray<CopyrightStatement> Contributors = [
+        new("Friedrich von Never <friedrich@fornever.me>")
+    ];
 
     [Fact]
     public Task UpdateEmptyFile() => DoTest(
