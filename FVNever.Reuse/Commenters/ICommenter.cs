@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Friedrich von Never <friedrich@fornever.me>
+// SPDX-FileCopyrightText: 2025-2026 Friedrich von Never <friedrich@fornever.me>
 //
 // SPDX-License-Identifier: MIT
 
@@ -13,7 +13,7 @@ public interface ICommenter
     /// <param name="copyrightStatements">The copyright statement collection.</param>
     /// <param name="licenseIdentifiers">The license identifier collection.</param>
     /// <returns>Resulting string, ending with a newline.</returns>
-    string GenerateHeader(IEnumerable<string> copyrightStatements, IEnumerable<string> licenseIdentifiers);
+    string GenerateHeader(IEnumerable<CopyrightStatement> copyrightStatements, IEnumerable<string> licenseIdentifiers);
 
     /// <summary>Remove metadata information from the file contents.</summary>
     /// <param name="currentContent">Current file contents.</param>

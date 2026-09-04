@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024-2025 Friedrich von Never <friedrich@fornever.me>
+// SPDX-FileCopyrightText: 2024-2026 Friedrich von Never <friedrich@fornever.me>
 //
 // SPDX-License-Identifier: MIT
 
@@ -9,7 +9,7 @@ namespace FVNever.Reuse;
 
 internal record DebianCopyrightFilesEntry(
     Matcher Matcher,
-    string[] Copyright,
+    CopyrightStatement[] Copyright,
     string License)
 {
     public static DebianCopyrightFilesEntry? Read(Stanza stanza)
@@ -23,6 +23,9 @@ internal record DebianCopyrightFilesEntry(
         var (_, files) = filesField;
         var matcher = new Matcher();
         matcher.AddIncludePatterns(files.Split("\n", StringSplitOptions.RemoveEmptyEntries));
-        return new DebianCopyrightFilesEntry(matcher, value["Copyright"].Item2.Split("\n"), value["License"].Item2);
+        return new DebianCopyrightFilesEntry(
+            matcher,
+            value["Copyright"].Item2.Split("\n").Select(x => new CopyrightStatement(x)).ToArray(),
+            value["License"].Item2);
     }
 }

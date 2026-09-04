@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2024-2025 Friedrich von Never <friedrich@fornever.me>
+SPDX-FileCopyrightText: 2024-2026 Friedrich von Never <friedrich@fornever.me>
 
 SPDX-License-Identifier: MIT
 -->
@@ -9,6 +9,10 @@ Changelog
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased] (2.0.0)
+### Changed
+- Copyright statements are now represented by `CopyrightStatement` class instead of raw strings.
 
 ## [1.1.0] - 2025-08-24
 ### Added

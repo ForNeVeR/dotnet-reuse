@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Friedrich von Never <friedrich@fornever.me>
+// SPDX-FileCopyrightText: 2025-2026 Friedrich von Never <friedrich@fornever.me>
 //
 // SPDX-License-Identifier: MIT
 
@@ -43,7 +43,9 @@ internal abstract class CommenterBase : ICommenter
     protected abstract string LinePrefix { get; }
     protected virtual string? CommentEndLine => null;
 
-    public string GenerateHeader(IEnumerable<string> copyrightStatements, IEnumerable<string> licenseIdentifiers)
+    public string GenerateHeader(
+        IEnumerable<CopyrightStatement> copyrightStatements,
+        IEnumerable<string> licenseIdentifiers)
     {
         return string.Join("\n", GenerateLines()) + "\n";
 
@@ -56,7 +58,7 @@ internal abstract class CommenterBase : ICommenter
             {
                 hadCopyright = true;
                 if (!hadAnyLine && startLine != null) yield return startLine;
-                yield return $"{LinePrefix}SPDX-FileCopyrightText: {copyrightStatement}";
+                yield return $"{LinePrefix}SPDX-FileCopyrightText: {copyrightStatement.FullText}";
                 hadAnyLine = true;
             }
 
