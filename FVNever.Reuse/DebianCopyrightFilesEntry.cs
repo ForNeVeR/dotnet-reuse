@@ -9,7 +9,7 @@ namespace FVNever.Reuse;
 
 internal record DebianCopyrightFilesEntry(
     Matcher Matcher,
-    CopyrightStatement[] Copyright,
+    CopyrightNotice[] Copyright,
     string License)
 {
     public static DebianCopyrightFilesEntry? Read(Stanza stanza)
@@ -25,7 +25,7 @@ internal record DebianCopyrightFilesEntry(
         matcher.AddIncludePatterns(files.Split("\n", StringSplitOptions.RemoveEmptyEntries));
         return new DebianCopyrightFilesEntry(
             matcher,
-            value["Copyright"].Item2.Split("\n").Select(x => new CopyrightStatement(x)).ToArray(),
+            value["Copyright"].Item2.Split("\n").Select(x => new CopyrightNotice(x)).ToArray(),
             value["License"].Item2);
     }
 }

@@ -12,15 +12,15 @@ using TruePath.SystemIo;
 namespace FVNever.Reuse;
 
 /// <summary>
-/// Represents REUSE metadata collected for a single file, including license identifiers and copyright statements.
+/// Represents REUSE metadata collected for a single file, including license identifiers and copyright notices.
 /// </summary>
 /// <param name="Path">The absolute path to the file the entry refers to.</param>
 /// <param name="LicenseIdentifiers">A list of SPDX license identifiers associated with the file.</param>
-/// <param name="CopyrightStatements">A list of copyright statements associated with the file.</param>
+/// <param name="CopyrightNotices">A list of copyright notices associated with the file.</param>
 public record ReuseFileEntry(
     AbsolutePath Path,
     ImmutableArray<string> LicenseIdentifiers,
-    ImmutableArray<CopyrightStatement> CopyrightStatements)
+    ImmutableArray<CopyrightNotice> CopyrightNotices)
 {
     /// <summary>Reads the REUSE information exclusively from the provided file.</summary>
     /// <remarks>Note it doesn't look into DEP5 or <c>.license</c> file.</remarks>
@@ -38,14 +38,14 @@ public record ReuseFileEntry(
         var lines = text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
         var filteredLines = FilterIgnoredBlocks(lines);
 
-        var (licenseIdentifiers, copyrightStatements) = CollectStatements(filteredLines);
-        if (licenseIdentifiers.Count == 0 && copyrightStatements.Count == 0)
+        var (licenseIdentifiers, copyrightNotices) = CollectStatements(filteredLines);
+        if (licenseIdentifiers.Count == 0 && copyrightNotices.Count == 0)
             return null;
 
         return new ReuseFileEntry(
             file,
             [..licenseIdentifiers],
-            [..copyrightStatements]);
+            [..copyrightNotices]);
     }
 
     private static IEnumerable<string> FilterIgnoredBlocks(IEnumerable<string> input)
@@ -80,11 +80,12 @@ public record ReuseFileEntry(
         new(@"©\s+(.*)")
     ];
 
-    private static (List<string> Licenses, List<CopyrightStatement> Copyrights) CollectStatements(IEnumerable<string> lines)
+    private static (List<string> Licenses, List<CopyrightNotice> CopyrightNotices) CollectStatements(
+        IEnumerable<string> lines)
     {
         // TODO[#25]: Support inverted comment markers, see https://github.com/fsfe/reuse-tool/issues/343
         var licenses = new List<string>();
-        var copyrights = new List<CopyrightStatement>();
+        var copyrights = new List<CopyrightNotice>();
         foreach (var line in lines)
         {
             if (line.Contains("SPDX-License-Identifier:"))
@@ -98,7 +99,7 @@ public record ReuseFileEntry(
                 var match = pattern.Match(line);
                 if (!match.Success) continue;
 
-                copyrights.Add(new CopyrightStatement(match.Groups[1].Value));
+                copyrights.Add(new CopyrightNotice(match.Groups[1].Value));
             }
         }
 
@@ -137,7 +138,7 @@ public record ReuseFileEntry(
             await UpdateFileContents(
                 licenseFile,
                 LicenseIdentifiers,
-                CopyrightStatements,
+                CopyrightNotices,
                 new PlainTextCommenter());
             return;
         }
@@ -145,7 +146,7 @@ public record ReuseFileEntry(
         await UpdateFileContents(
             Path,
             LicenseIdentifiers,
-            CopyrightStatements,
+            CopyrightNotices,
             commenter ?? DefaultCommenters.Guess(Path));
     }
 
@@ -154,17 +155,18 @@ public record ReuseFileEntry(
     /// </summary>
     /// <param name="baseDirectory">The directory to calculate relative ordering of files for deterministic output.</param>
     /// <param name="entries">A sequence of entries to combine.</param>
-    /// <returns>A combined entry with de-duplicated license identifiers and copyright statements.</returns>
+    /// <returns>A combined entry with deduplicated license identifiers and copyright notices.</returns>
+    [PublicAPI]
     public static ReuseCombinedEntry CombineEntries(AbsolutePath baseDirectory, IEnumerable<ReuseFileEntry> entries)
     {
         var licenses = new List<string>();
-        var copyrights = new List<CopyrightStatement>();
+        var copyrights = new List<CopyrightNotice>();
         var licenseHash = new HashSet<string>();
-        var copyrightHash = new HashSet<CopyrightStatement>();
+        var copyrightHash = new HashSet<CopyrightNotice>();
         foreach (var entry in entries.OrderBy(x => ((LocalPath)x.Path).RelativeTo(baseDirectory).Value))
         {
             licenses.AddRange(entry.LicenseIdentifiers.Where(license => licenseHash.Add(license)));
-            copyrights.AddRange(entry.CopyrightStatements.Where(statement => copyrightHash.Add(statement)));
+            copyrights.AddRange(entry.CopyrightNotices.Where(statement => copyrightHash.Add(statement)));
         }
 
         return new ReuseCombinedEntry([..licenses], [..copyrights]);
@@ -180,20 +182,20 @@ public record ReuseFileEntry(
     private static async Task UpdateFileContents(
         AbsolutePath path,
         IEnumerable<string> licenseIdentifiers,
-        IEnumerable<CopyrightStatement> copyrightStatements,
+        IEnumerable<CopyrightNotice> copyrightNotices,
         ICommenter commenter)
     {
-        var newContent = await GenerateContent(path, licenseIdentifiers, copyrightStatements, commenter);
+        var newContent = await GenerateContent(path, licenseIdentifiers, copyrightNotices, commenter);
         await path.WriteAllTextAsync(newContent);
     }
 
     private static async Task<string> GenerateContent(
         AbsolutePath path,
         IEnumerable<string> licenseIdentifiers,
-        IEnumerable<CopyrightStatement> copyrightStatements,
+        IEnumerable<CopyrightNotice> copyrightNotices,
         ICommenter commenter)
     {
-        var header = commenter.GenerateHeader(copyrightStatements, licenseIdentifiers);
+        var header = commenter.GenerateHeader(copyrightNotices, licenseIdentifiers);
         if (!path.Exists())
         {
             return header;
@@ -208,10 +210,10 @@ public record ReuseFileEntry(
 /// <summary>
 /// Represents a combined view of REUSE metadata after merging multiple file entries.
 /// </summary>
-/// <param name="LicenseIdentifiers">De-duplicated SPDX license identifiers in their combined order.</param>
-/// <param name="CopyrightStatements">De-duplicated copyright statements in their combined order.</param>
+/// <param name="LicenseIdentifiers">Deduplicated SPDX license identifiers in their combined order.</param>
+/// <param name="CopyrightNotices">Deduplicated copyright notices in their combined order.</param>
 [PublicAPI]
 public record ReuseCombinedEntry(
     ImmutableArray<string> LicenseIdentifiers,
-    ImmutableArray<CopyrightStatement> CopyrightStatements
+    ImmutableArray<CopyrightNotice> CopyrightNotices
 );
