@@ -92,8 +92,8 @@ internal abstract class CommenterBase : ICommenter
             {
                 if (!blockEnded)
                 {
-                    if (ReuseFileEntry.CopyrightPatterns.Any(p => p.IsMatch(line))
-                        || line.Contains("SPDX-License-Identifier"))
+                    if (CopyrightNotice.ContainsCopyrightNotice(line)
+                        || line.Contains("SPDX-License-Identifier:"))
                     {
                         spaceBuffer.Clear();
                         continue;

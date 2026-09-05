@@ -18,6 +18,10 @@ SPDX-License-Identifier: MIT
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="FVNever.Reuse.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="GitignoreParserNet" Version="0.2.0.15" />
         <PackageReference Include="JetBrains.Annotations.Sources" Version="2026.2.0">
           <PrivateAssets>all</PrivateAssets>

@@ -25,7 +25,7 @@ internal record DebianCopyrightFilesEntry(
         matcher.AddIncludePatterns(files.Split("\n", StringSplitOptions.RemoveEmptyEntries));
         return new DebianCopyrightFilesEntry(
             matcher,
-            value["Copyright"].Item2.Split("\n").Select(x => new CopyrightNotice(x)).ToArray(),
+            value["Copyright"].Item2.Split("\n").Select(CopyrightNotice.ParsePrefixless).ToArray(),
             value["License"].Item2);
     }
 }

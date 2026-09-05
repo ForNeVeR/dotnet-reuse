@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
-using System.Text.RegularExpressions;
 using FVNever.Reuse.Commenters;
 using JetBrains.Annotations;
 using TruePath;
@@ -74,12 +73,6 @@ public record ReuseFileEntry(
 
     // REUSE-IgnoreStart
 
-    internal static readonly Regex[] CopyrightPatterns = [
-        new(@"SPDX-(?:File|Snippet)CopyrightText:\s*(.*)"),
-        new(@"Copyright\s?(?:\([Cc]\))\s+(.*)"),
-        new(@"©\s+(.*)")
-    ];
-
     private static (List<string> Licenses, List<CopyrightNotice> CopyrightNotices) CollectStatements(
         IEnumerable<string> lines)
     {
@@ -94,12 +87,9 @@ public record ReuseFileEntry(
                 continue;
             }
 
-            foreach (var pattern in CopyrightPatterns)
+            if (CopyrightNotice.ContainsCopyrightNotice(line))
             {
-                var match = pattern.Match(line);
-                if (!match.Success) continue;
-
-                copyrights.Add(new CopyrightNotice(match.Groups[1].Value));
+                copyrights.Add(CopyrightNotice.Parse(line));
             }
         }
 

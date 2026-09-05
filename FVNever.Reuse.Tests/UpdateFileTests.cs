@@ -13,7 +13,7 @@ public class UpdateFileTests
 {
     private static readonly ImmutableArray<string> Licenses = ["MIT"];
     private static readonly ImmutableArray<CopyrightNotice> Contributors = [
-        new("Friedrich von Never <friedrich@fornever.me>")
+        new("Friedrich von Never <friedrich@fornever.me>", "Friedrich von Never")
     ];
 
     [Fact]
