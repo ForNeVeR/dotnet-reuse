@@ -44,7 +44,7 @@ internal abstract class CommenterBase : ICommenter
     protected virtual string? CommentEndLine => null;
 
     public string GenerateHeader(
-        IEnumerable<CopyrightStatement> copyrightStatements,
+        IEnumerable<CopyrightNotice> copyrightNotices,
         IEnumerable<string> licenseIdentifiers)
     {
         return string.Join("\n", GenerateLines()) + "\n";
@@ -54,11 +54,11 @@ internal abstract class CommenterBase : ICommenter
             var hadAnyLine = false;
             var startLine = CommentStartLine;
             var hadCopyright = false;
-            foreach (var copyrightStatement in copyrightStatements)
+            foreach (var copyrightNotice in copyrightNotices)
             {
                 hadCopyright = true;
                 if (!hadAnyLine && startLine != null) yield return startLine;
-                yield return $"{LinePrefix}SPDX-FileCopyrightText: {copyrightStatement.FullText}";
+                yield return $"{LinePrefix}SPDX-FileCopyrightText: {copyrightNotice.FullText}";
                 hadAnyLine = true;
             }
 

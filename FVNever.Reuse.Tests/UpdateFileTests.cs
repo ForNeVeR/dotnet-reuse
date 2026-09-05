@@ -12,7 +12,7 @@ namespace FVNever.Reuse.Tests;
 public class UpdateFileTests
 {
     private static readonly ImmutableArray<string> Licenses = ["MIT"];
-    private static readonly ImmutableArray<CopyrightStatement> Contributors = [
+    private static readonly ImmutableArray<CopyrightNotice> Contributors = [
         new("Friedrich von Never <friedrich@fornever.me>")
     ];
 

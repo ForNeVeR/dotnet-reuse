@@ -27,7 +27,7 @@ foreach (var entry in entries)
     Console.WriteLine($"- {entry.Path}");
     foreach (var license in entry.LicenseIdentifiers)
         Console.WriteLine($"  - license found: {license}");
-    foreach (var copyright in entry.CopyrightStatements)
+    foreach (var copyright in entry.CopyrightNotices)
         Console.WriteLine($"  - copyright found: {copyright}");
 }
 ```
