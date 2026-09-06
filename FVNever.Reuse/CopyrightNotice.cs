@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MIT
 
+using System.Text.RegularExpressions;
+
 namespace FVNever.Reuse;
 
 /// <summary>A copyright notice with all its parsed information, when possible.</summary>
@@ -25,7 +27,20 @@ public class CopyrightNotice
     /// </remarks>
     public static CopyrightNotice Parse(string fullText)
     {
-        return ParsePrefixless(SkipMandatoryPrefix(fullText));
+        return ParseNoMandatoryPrefix(SkipMandatoryPrefix(fullText));
+    }
+
+    private static readonly Regex MandatoryPrefixPattern = new(
+        @"SPDX-FileCopyrightText:|SPDX-SnippetCopyrightText:|©|Copyright\s",
+        RegexOptions.Compiled);
+
+    private static (int, int)? FindMandatoryPrefix(string line)
+    {
+        var mandatoryPrefixMatch = MandatoryPrefixPattern.Match(line);
+        if (!mandatoryPrefixMatch.Success)
+            return null;
+
+        return (mandatoryPrefixMatch.Index, mandatoryPrefixMatch.Length);
     }
 
     /// <summary>
@@ -38,38 +53,34 @@ public class CopyrightNotice
     ///     Here we also impose a requirement that the word "Copyright" should be followed by a whitespace character.
     /// </para>
     /// </summary>
-    public static bool ContainsCopyrightNotice(string line)
+    public static bool ContainsCopyrightNotice(string line) =>
+        FindMandatoryPrefix(line) is not null;
+
+    private static string SkipMandatoryPrefix(string fullText)
     {
-        if (line.Contains("SPDX-FileCopyrightText:")
-            || line.Contains("SPDX-SnippetCopyrightText:")
-            || line.Contains("©"))
+        if (FindMandatoryPrefix(fullText) is var (index, length))
         {
-            return true;
+            return fullText[(index + length)..];
         }
 
-        const string copyright = "Copyright";
-        var copyrightIndex = line.IndexOf(copyright, StringComparison.Ordinal);
-        if (copyrightIndex < 0) return false;
-
-        if (line.Length > copyrightIndex + copyright.Length)
-        {
-            var nextChar = line[copyrightIndex + copyright.Length];
-            if (char.IsWhiteSpace(nextChar))
-                return true;
-        }
-
-        return false;
+        return fullText;
     }
 
-    private static string SkipMandatoryPrefix(string fullText) =>
-        throw new Exception("TODO: Should follow the same logic as ContainsCopyrightNotice");
+    private static readonly Regex NonMandatoryCopyrightSignsWithWhitespace = new(@"^((\(C\)|\(c\)|©)\s*)");
 
-    internal static CopyrightNotice ParsePrefixless(string fullText)
+    internal static CopyrightNotice ParseNoMandatoryPrefix(string fullText)
     {
-        throw new Exception("TODO: Find the start index");
-        // TODO: Skip the copyright signs as required
+        var toParse = fullText;
+        var matches = NonMandatoryCopyrightSignsWithWhitespace.Match(fullText);
+        if (matches.Success)
+        {
+            toParse = fullText.Substring(matches.Length).Trim();
+        }
+
         // TODO: Parse the year range
-        // TODO: Everything else is the name
+        // TODO: Parse the contact info
+        var holderName = toParse; // TODO: Should be everything else left after parsing.
+        return new CopyrightNotice(fullText: fullText, holderName: holderName);
     }
 
     // REUSE-IgnoreEnd
