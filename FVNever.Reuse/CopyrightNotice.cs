@@ -24,6 +24,11 @@ public class CopyrightNotice
     ///     Note that most of the specification regarding the copyright notice format is a recommendation and not a
     ///     strict requirement. So, not every aspect of the copyright notice <b>MUST</b> be parseable.
     /// </para>
+    /// <para>
+    ///     The specification does not document how year ranges are supposed to be parsed, so we follow
+    ///     <a href="https://github.com/fsfe/reuse-website/issues/128">the proposal</a> that doesn't contradict anything
+    ///     said in the spec.
+    /// </para>
     /// </remarks>
     public static CopyrightNotice Parse(string fullText)
     {
@@ -78,16 +83,21 @@ public class CopyrightNotice
             toParse = fullText.Substring(matches.Length).Trim();
         }
 
-        // TODO: Parse the year range
+        (var years, toParse) = ParseYears(toParse);
         // TODO: Parse the contact info
         var holderName = toParse; // TODO: Should be everything else left after parsing.
-        return new CopyrightNotice(fullText: fullText, holderName: holderName);
+        return new CopyrightNotice(fullText: fullText, years: years, holderName: holderName);
     }
+
+    private static (List<YearItem>, string) ParseYears(string fullText) => throw new Exception("TODO");
 
     // REUSE-IgnoreEnd
 
     /// <summary>Full text of the copyright notice, as presented in the original document.</summary>
     public string FullText { get; }
+
+    /// <summary>Years of publication, if present in the original text.</summary>
+    public IReadOnlyList<YearItem> Years { get; }
 
     /// <summary>Copyright holder name.</summary>
     public string HolderName { get; }
@@ -95,6 +105,7 @@ public class CopyrightNotice
     /// <summary>A copyright notice with all its parsed information, when possible.</summary>
     /// <param name="fullText">Full text of the copyright notice, as presented in the original document.</param>
     /// <param name="holderName">Copyright holder name.</param>
+    /// <param name="years">Years of publication, if present in the original text.</param>
     /// <remarks>
     /// <para>
     ///     This does the best effort to parse and store the copyright notice according to the
@@ -107,10 +118,12 @@ public class CopyrightNotice
     /// </remarks>
     internal CopyrightNotice(
         string fullText,
+        IReadOnlyList<YearItem> years,
         string holderName)
     {
         FullText = fullText;
         HolderName = holderName;
+        Years = years;
     }
 
     /// <inheritdoc/>
@@ -121,4 +134,14 @@ public class CopyrightNotice
 
     /// <inheritdoc/>
     public override int GetHashCode() => FullText.GetHashCode();
+
+    public abstract record YearItem
+    {
+        private YearItem()
+        {
+        }
+
+        public record SingleYear(int Year) : YearItem;
+        public record YearRange(int StartYear, int EndYear) : YearItem;
+    }
 }
