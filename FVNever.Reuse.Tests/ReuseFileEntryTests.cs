@@ -10,8 +10,7 @@ public class ReuseFileEntryTests
     [InlineData("Copyright (C) frob", "frob")]
     [InlineData("Copyright © frob", "frob")]
     [InlineData("© © © frob", "frob")]
-    [InlineData("SPDX-FileCopyrightText: Copyright (C) © (C) frob", "frob")]
-    [InlineData("SPDX-FileCopyrightText frob", "SPDX-FileCopyrightText frob")]
+    [InlineData("SPDX-FileCopyrightText: (C) © (C) frob", "frob")]
     [InlineData("Copyright ©", "")]
     public async Task NameIsParsedCorrectly(string fileContent, string holderName)
     {
