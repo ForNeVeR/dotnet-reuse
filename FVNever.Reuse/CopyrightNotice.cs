@@ -58,15 +58,16 @@ public class CopyrightNotice
 
     private static string SkipMandatoryPrefix(string fullText)
     {
+        string result = fullText;
         if (FindMandatoryPrefix(fullText) is var (index, length))
         {
-            return fullText[(index + length)..];
+            result = fullText[(index + length)..];
         }
 
-        return fullText;
+        return result.Trim();
     }
 
-    private static readonly Regex NonMandatoryCopyrightSignsWithWhitespace = new(@"^((\(C\)|\(c\)|©)\s*)");
+    private static readonly Regex NonMandatoryCopyrightSignsWithWhitespace = new(@"^((\(C\)|\(c\)|©)\s*)*");
 
     internal static CopyrightNotice ParseNoMandatoryPrefix(string fullText)
     {
