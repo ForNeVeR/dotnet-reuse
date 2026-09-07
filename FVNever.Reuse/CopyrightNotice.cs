@@ -83,13 +83,11 @@ public class CopyrightNotice
             toParse = fullText.Substring(matches.Length).Trim();
         }
 
-        (var years, toParse) = ParseYears(toParse);
+        (var years, toParse) = YearParser.Parse(toParse);
         // TODO: Parse the contact info
         var holderName = toParse; // TODO: Should be everything else left after parsing.
         return new CopyrightNotice(fullText: fullText, years: years, holderName: holderName);
     }
-
-    private static (List<YearItem>, string) ParseYears(string fullText) => throw new Exception("TODO");
 
     // REUSE-IgnoreEnd
 
