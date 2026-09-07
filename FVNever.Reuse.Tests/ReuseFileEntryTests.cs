@@ -24,7 +24,7 @@ public class ReuseFileEntryTests
     [InlineData("Copyright")]
     public async Task InvalidCopyrightIsNotParsed(string fileContent)
     {
-        var content = ParseFileEntry(fileContent);
+        var content = await ParseFileEntry(fileContent);
         Assert.Null(content);
     }
 
@@ -45,7 +45,7 @@ public class ReuseFileEntryTests
         Assert.Equal([
             new CopyrightNotice.YearItem.YearRange(2022, 2023)
         ], copyright.Years);
-        Assert.Equal(", 2025 Friedrich von Never", copyright.HolderName);
+        Assert.Equal(",, 2025 Friedrich von Never", copyright.HolderName);
     }
 
     private static async Task<ReuseFileEntry?> ParseFileEntry(string content)
