@@ -13,124 +13,126 @@ internal static class YearParser
 
         int DoParse()
         {
-            CopyrightNotice.YearItem? lastYearElement = null;
-            YearToken? lastYear = null;
-            CommaToken? lastComma = null;
-            DashToken? lastDash = null;
-
-            foreach (var token in Tokenize(fullText))
+            var tokens = Tokenize(fullText);
+            while (tokens.Count > 0)
             {
+                var token = tokens.Dequeue();
                 switch (token)
                 {
-                    case YearToken year when lastYear is null && lastComma is not null && lastDash is null:
-                        lastComma = null;
-                        lastYear = year;
-                        break;
-                    case YearToken when lastYear is null && lastComma is null && lastDash is not null:
-                        // orphan dash
-                        return lastDash.StartIndex;
-                    case YearToken nextYear when lastYear is not null && lastDash is null:
-                        // two years one after another
-                        years.Add(new CopyrightNotice.YearItem.SingleYear(lastYear.Year));
-                        return nextYear.StartIndex;
-                    case YearToken nextYear when lastYear is not null && lastComma is null && lastDash is not null:
-                        years.Add(lastYearElement = new CopyrightNotice.YearItem.YearRange(lastYear.Year, nextYear.Year));
-                        lastYear = null;
-                        lastDash = null;
-                        break;
+                    case YearToken year:
+                        if (tokens.TryDequeue(out var nextToken))
+                        {
+                            switch (nextToken)
+                            {
+                                case CommaToken comma:
+                                {
+                                    years.Add(new CopyrightNotice.YearItem.SingleYear(year.Year));
 
-                    case CommaToken comma when lastYearElement is null && lastYear is null:
-                        // comma without preceding year item
-                        return comma.StartIndex;
-                    case CommaToken comma when lastYear is not null && lastComma is null && lastDash is null:
-                        lastYearElement = null;
-                        years.Add(new CopyrightNotice.YearItem.SingleYear(lastYear.Year));
-                        lastYear = null;
-                        lastComma = comma;
-                        break;
-                    case CommaToken comma when lastComma is not null && lastDash is not null:
-                        // comma after comma or dash
-                        return comma.StartIndex;
-                    case CommaToken comma:
-                        lastYearElement = null;
-                        lastComma = comma;
-                        break;
+                                    if (!tokens.TryPeek(out var nextYear) || nextYear is not YearToken)
+                                    {
+                                        // invalid item after comma, comma itself also gets invalidated
+                                        return comma.StartIndex;
+                                    }
 
-                    case DashToken dash when lastDash is null && lastComma is null:
-                        lastYearElement = null;
-                        lastDash = dash;
-                        break;
-                    case DashToken dash: // dash after dash or comma
-                        return dash.StartIndex;
+                                    continue;
+                                }
+                                case DashToken dashToken:
+                                {
+                                    if (!tokens.TryDequeue(out var nextYear) || nextYear is not YearToken ny)
+                                    {
+                                        years.Add(new CopyrightNotice.YearItem.SingleYear(year.Year));
+                                        return dashToken.StartIndex;
+                                    }
 
-                    case RestTextToken restTextToken:
-                        return restTextToken.StartIndex;
+                                    years.Add(new CopyrightNotice.YearItem.YearRange(year.Year, ny.Year));
+
+                                    if (!tokens.TryDequeue(out var nextComma)) return fullText.Length;
+                                    if (nextComma is not CommaToken) return nextComma.StartIndex;
+                                    if (!tokens.TryPeek(out var evenNextYear) || evenNextYear is not YearToken)
+                                    {
+                                        // invalid item after next comma, comma itself also gets invalidated
+                                        return nextComma.StartIndex;
+                                    }
+                                    continue;
+                                }
+
+                                case RestTextToken restTextToken:
+                                    years.Add(new CopyrightNotice.YearItem.SingleYear(year.Year));
+                                    return restTextToken.StartIndex;
+                                case YearToken yearToken:
+                                    years.Add(new CopyrightNotice.YearItem.SingleYear(year.Year));
+                                    return yearToken.StartIndex;
+                                default:
+                                    throw new ArgumentOutOfRangeException(nameof(nextToken));
+                            }
+                        }
+
+                        years.Add(new CopyrightNotice.YearItem.SingleYear(year.Year));
+                        continue;
+                    case CommaToken or DashToken or RestTextToken: // invalid start of expression
+                        return token.StartIndex;
                     default:
                         throw new Exception($"Impossible state: {token} encountered while parsing {fullText}.");
                 }
             }
 
-            if (lastYear is not null)
-                years.Add(new CopyrightNotice.YearItem.SingleYear(lastYear.Year));
-
-            if (lastComma is not null)
-                return lastComma.StartIndex;
-
-            if (lastDash is not null)
-                return lastDash.StartIndex;
-
             return fullText.Length;
         }
     }
 
-    private static IEnumerable<Token> Tokenize(string text)
+    private static Queue<Token> Tokenize(string text)
     {
-        YearToken? currentYear = null;
-        int index;
-        for (index = 0; index < text.Length; ++index)
+        return new Queue<Token>(Go());
+
+        IEnumerable<Token> Go()
         {
-            var c = text[index];
-            if (c is >= '0' and <= '9')
+            YearToken? currentYear = null;
+            int index;
+            for (index = 0; index < text.Length; ++index)
             {
-                if (currentYear is null)
+                var c = text[index];
+                if (c is >= '0' and <= '9')
                 {
-                    currentYear = new YearToken(index, c - '0');
+                    if (currentYear is null)
+                    {
+                        currentYear = new YearToken(index, c - '0');
+                    }
+                    else
+                    {
+                        currentYear = currentYear with { Year = currentYear.Year * 10 + (c - '0') };
+                    }
                 }
                 else
                 {
-                    currentYear = currentYear with { Year = currentYear.Year * 10 + (c - '0') };
+                    if (currentYear is not null)
+                    {
+                        yield return currentYear;
+                        currentYear = null;
+                    }
+
+                    if (char.IsWhiteSpace(c))
+                    {
+                    }
+                    else if (c is '-' or '–' or '—')
+                    {
+                        yield return new DashToken(index);
+                    }
+                    else if (c is ',')
+                    {
+                        yield return new CommaToken(index);
+                    }
+                    else
+                    {
+                        yield return new RestTextToken(index);
+                        yield break;
+                    }
                 }
             }
-            else
+
+            if (currentYear is { } remainingYear)
             {
-                if (currentYear is { } cy)
-                {
-                    yield return currentYear;
-                    currentYear = null;
-                }
-
-                if (char.IsWhiteSpace(c))
-                {
-                }
-                else if (c is '-' or '–' or '—')
-                {
-                    yield return new DashToken(index);
-                }
-                else if (c is ',')
-                {
-                    yield return new CommaToken(index);
-                }
-                else
-                {
-                    yield return new RestTextToken(index);
-                    yield break;
-                }
+                yield return remainingYear;
             }
-        }
-
-        if (currentYear is { } remainingYear)
-        {
-            yield return remainingYear;
         }
     }
 
