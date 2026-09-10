@@ -29,6 +29,7 @@ public class YearParserTests
         DoTest("-2026", [], "-2026");
         DoTest("2026–", [new CopyrightNotice.YearItem.SingleYear(2026)], "–");
         DoTest("2026,", [new CopyrightNotice.YearItem.SingleYear(2026)], ",");
+        DoTest("2026,,", [new CopyrightNotice.YearItem.SingleYear(2026)], ",,");
         DoTest("2026–2027–2028", [new CopyrightNotice.YearItem.YearRange(2026, 2027)], "–2028");
         DoTest("2026 2027", [new CopyrightNotice.YearItem.SingleYear(2026)], "2027");
     }
