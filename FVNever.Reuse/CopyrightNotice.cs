@@ -189,5 +189,79 @@ public class CopyrightNotice
         /// <param name="StartYear">The start year of the range.</param>
         /// <param name="EndYear">The end year of the range.</param>
         public record YearRange(int StartYear, int EndYear) : YearItem;
+
+        /// <summary>
+        /// Merges two year sequences into a single item covering every year from both of them, filling any gaps
+        /// (e.g. <c>2020, 2024–2025</c> and <c>2022</c> become <c>2020–2025</c>).
+        /// </summary>
+        /// <param name="first">The first sequence of years.</param>
+        /// <param name="second">The second sequence of years.</param>
+        /// <returns>
+        /// A <see cref="SingleYear"/> if all the input years are the same, a <see cref="YearRange"/> otherwise, or
+        /// <c>null</c> if both sequences are empty.
+        /// </returns>
+        /// <remarks>Reversed ranges (e.g. <c>2027–2026</c>) are treated as if their bounds were in order.</remarks>
+        public static YearItem? MergeExpansive(IEnumerable<YearItem> first, IEnumerable<YearItem> second)
+        {
+            (int Start, int End)? result = null;
+            foreach (var (start, end) in first.Concat(second).Select(item => item.Bounds()))
+            {
+                result = result is var (resultStart, resultEnd)
+                    ? (Math.Min(resultStart, start), Math.Max(resultEnd, end))
+                    : (start, end);
+            }
+
+            return result is var (s, e) ? FromBounds(s, e) : null;
+        }
+
+        /// <summary>
+        /// Merges two year sequences into the most compact sequence describing exactly the same set of years:
+        /// duplicates are removed, and overlapping or adjacent items are joined (e.g. <c>2022</c>, <c>2023</c>, and
+        /// <c>2024</c> become <c>2022–2024</c>). Gaps between the years are preserved.
+        /// </summary>
+        /// <param name="first">The first sequence of years.</param>
+        /// <param name="second">The second sequence of years.</param>
+        /// <returns>The merged items, sorted in ascending order.</returns>
+        /// <remarks>
+        /// Reversed ranges (e.g. <c>2027–2026</c>) are treated as if their bounds were in order. Ranges covering only
+        /// one year are returned as <see cref="SingleYear"/>.
+        /// </remarks>
+        public static IEnumerable<YearItem> MergeCompact(IEnumerable<YearItem> first, IEnumerable<YearItem> second)
+        {
+            var bounds = first.Concat(second)
+                .Select(item => item.Bounds())
+                .OrderBy(b => b.Start)
+                .ThenBy(b => b.End);
+
+            (int Start, int End)? current = null;
+            foreach (var (start, end) in bounds)
+            {
+                if (current is var (currentStart, currentEnd))
+                {
+                    if (start <= currentEnd + 1)
+                    {
+                        current = (currentStart, Math.Max(currentEnd, end));
+                        continue;
+                    }
+
+                    yield return FromBounds(currentStart, currentEnd);
+                }
+
+                current = (start, end);
+            }
+
+            if (current is var (lastStart, lastEnd))
+                yield return FromBounds(lastStart, lastEnd);
+        }
+
+        private (int Start, int End) Bounds() => this switch
+        {
+            SingleYear s => (s.Year, s.Year),
+            YearRange r => (Math.Min(r.StartYear, r.EndYear), Math.Max(r.StartYear, r.EndYear)),
+            _ => throw new InvalidOperationException($"Unknown year item: {this}.")
+        };
+
+        private static YearItem FromBounds(int start, int end) =>
+            start == end ? new SingleYear(start) : new YearRange(start, end);
     }
 }

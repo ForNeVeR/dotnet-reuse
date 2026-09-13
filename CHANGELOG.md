@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - Copyright notices are now represented by `CopyrightNotice` class instead of raw strings.
 
+### Added
+- New methods `CopyrightNotice.YearItem.MergeExpansive` and `CopyrightNotice.YearItem.MergeCompact` to merge year sequences.
+
 ## [1.1.0] - 2025-08-24
 ### Added
 - New method `ReuseFileEntry.UpdateFileContents` to apply changes to REUSE metadata kept in a file.
