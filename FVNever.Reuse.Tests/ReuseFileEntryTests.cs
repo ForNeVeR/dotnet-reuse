@@ -17,6 +17,7 @@ public class ReuseFileEntryTests
     [InlineData("© © © frob", "frob")]
     [InlineData("SPDX-FileCopyrightText: (C) © (C) frob", "frob")]
     [InlineData("Copyright ©", "")]
+    [InlineData("Copyright 3M Company", "3M Company")]
     public async Task NameIsParsedCorrectly(string fileContent, string holderName)
     {
         var notice = await ParseCopyrightNotice(fileContent);
@@ -40,6 +41,15 @@ public class ReuseFileEntryTests
             new CopyrightNotice.YearItem.YearRange(2022, 2023),
             new CopyrightNotice.YearItem.SingleYear(2025)
         ], copyright.Years);
+    }
+
+    [Fact]
+    public async Task OptionalCopyrightSignIsKeptInFullText()
+    {
+        var copyright = await ParseCopyrightNotice("Copyright (C) 2026 Foo");
+        Assert.Equal("(C) 2026 Foo", copyright.FullText);
+        Assert.Equal([new CopyrightNotice.YearItem.SingleYear(2026)], copyright.Years);
+        Assert.Equal("Foo", copyright.HolderName);
     }
 
     [Fact]
