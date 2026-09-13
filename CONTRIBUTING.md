@@ -37,6 +37,18 @@ $ dotnet docfx docs/docfx.json --serve
 
 Then, open http://localhost:8080/ and browse the documentation.
 
+Public Documentation
+--------------------
+We value the XML documentation on every public type or member exposed from dotnet-reuse.
+
+For ease of development, though, the development build configuration doesn't require you to write documentation for all the public entities in the library. There's a separate CI configuration that checks for this, so it will only warn you about missing documentation when you send a PR.
+
+To run the corresponding check locally, use the following shell command:
+```console
+$ dotnet build -target:Rebuild -property:AllWarningsMode=true
+```
+(the `Rebuild` target is there to prevent possible reuse of the artifacts already built without the `AllWarningsMode`, potentially masking the possible issues).
+
 License Automation
 ------------------
 If the CI asks you to update the file licenses, follow one of these:

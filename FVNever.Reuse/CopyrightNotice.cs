@@ -174,13 +174,20 @@ public class CopyrightNotice
     /// <inheritdoc/>
     public override int GetHashCode() => FullText.GetHashCode();
 
+    /// <summary>Container for either a year or a year range (like 2025–2026).</summary>
     public abstract record YearItem
     {
         private YearItem()
         {
         }
 
+        /// <summary>Single year item.</summary>
+        /// <param name="Year">The year in question.</param>
         public record SingleYear(int Year) : YearItem;
+
+        /// <summary>Year range (usually inclusive).</summary>
+        /// <param name="StartYear">The start year of the range.</param>
+        /// <param name="EndYear">The end year of the range.</param>
         public record YearRange(int StartYear, int EndYear) : YearItem;
     }
 }
