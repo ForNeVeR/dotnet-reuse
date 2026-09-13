@@ -108,8 +108,16 @@ internal static class YearParser
                 }
                 else
                 {
+                    var isSeparator = char.IsWhiteSpace(c) || c is '-' or '–' or '—' or ',';
                     if (currentYear is not null)
                     {
+                        if (!isSeparator)
+                        {
+                            // digits directly followed by text (e.g. "3M") are not a year
+                            yield return new RestTextToken(currentYear.StartIndex);
+                            yield break;
+                        }
+
                         yield return currentYear;
                         currentYear = null;
                     }

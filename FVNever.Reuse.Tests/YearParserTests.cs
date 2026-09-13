@@ -36,6 +36,9 @@ public class YearParserTests
         DoTest("2026,,", [new CopyrightNotice.YearItem.SingleYear(2026)], ",,");
         DoTest("2026–2027–2028", [new CopyrightNotice.YearItem.YearRange(2026, 2027)], "–2028");
         DoTest("2026 2027", [new CopyrightNotice.YearItem.SingleYear(2026)], "2027");
+        DoTest("3M Company", [], "3M Company");
+        DoTest("2026 3M", [new CopyrightNotice.YearItem.SingleYear(2026)], "3M");
+        DoTest("2026abc", [], "2026abc");
     }
 
     private static void DoTest(string input, CopyrightNotice.YearItem[] expectedYears, string expectedRest)
