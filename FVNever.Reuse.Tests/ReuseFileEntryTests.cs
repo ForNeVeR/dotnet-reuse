@@ -52,6 +52,27 @@ public class ReuseFileEntryTests
         Assert.Equal(",, 2025 Friedrich von Never", copyright.HolderName);
     }
 
+    [Fact]
+    public async Task ContactAddressIsParsedCorrectly()
+    {
+        var copyright = await ParseCopyrightNotice(
+            "SPDX-FileCopyrightText: 2026 Friedrich von Never <friedrich@fornever.me>");
+        Assert.Equal([new CopyrightNotice.YearItem.SingleYear(2026)], copyright.Years);
+        Assert.Equal("Friedrich von Never", copyright.HolderName);
+        Assert.Equal("friedrich@fornever.me", copyright.ContactAddress);
+    }
+
+    [Theory]
+    [InlineData("Copyright frob <frob@example.com", "frob <frob@example.com")]
+    [InlineData("Copyright frob <frob@example.com> trailing", "frob <frob@example.com> trailing")]
+    [InlineData("Copyright frob <frob<@example.com>", "frob <frob<@example.com>")]
+    public async Task CorruptedContactAddressIsPartOfName(string fileContent, string holderName)
+    {
+        var copyright = await ParseCopyrightNotice(fileContent);
+        Assert.Equal(holderName, copyright.HolderName);
+        Assert.Null(copyright.ContactAddress);
+    }
+
     private static async Task<ReuseFileEntry?> ParseFileEntry(string content)
     {
         var file = Temporary.CreateTempFile();

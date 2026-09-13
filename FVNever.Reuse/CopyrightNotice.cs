@@ -29,6 +29,13 @@ public class CopyrightNotice
     ///     <a href="https://github.com/fsfe/reuse-website/issues/128">the proposal</a> that doesn't contradict anything
     ///     said in the spec.
     /// </para>
+    /// <para>
+    ///     Following the order recommended by the specification (year, name, contact address), the contact address of
+    ///     the copyright holder is parsed from in between angle brackets at the very end of the notice (e.g.
+    ///     <c>&lt;jane@example.com&gt;</c>). If the angle brackets are not correctly paired, or if there is any text
+    ///     after the closing bracket, then no contact address is parsed, and the whole remaining text is considered to
+    ///     be a part of the <see cref="HolderName"/>.
+    /// </para>
     /// </remarks>
     public static CopyrightNotice Parse(string fullText)
     {
@@ -84,9 +91,30 @@ public class CopyrightNotice
         }
 
         (var years, toParse) = YearParser.Parse(toParse);
-        // TODO: Parse the contact info
-        var holderName = toParse; // TODO: Should be everything else left after parsing.
-        return new CopyrightNotice(fullText: fullText, years: years, holderName: holderName);
+        var (holderName, contactAddress) = SplitContactAddress(toParse);
+        return new CopyrightNotice(
+            fullText: fullText,
+            years: years,
+            holderName: holderName,
+            contactAddress: contactAddress);
+    }
+
+    private static (string HolderName, string? ContactAddress) SplitContactAddress(string text)
+    {
+        text = text.TrimEnd();
+        if (!text.EndsWith('>'))
+            return (text, null);
+
+        var open = text.LastIndexOf('<');
+        if (open == -1)
+            return (text, null);
+
+        var contactAddress = text[(open + 1)..^1];
+        var holderName = text[..open].TrimEnd();
+        if (contactAddress.IndexOfAny(['<', '>']) != -1 || holderName.IndexOfAny(['<', '>']) != -1)
+            return (text, null);
+
+        return (holderName, contactAddress);
     }
 
     // REUSE-IgnoreEnd
@@ -97,13 +125,24 @@ public class CopyrightNotice
     /// <summary>Years of publication, if present in the original text.</summary>
     public IReadOnlyList<YearItem> Years { get; }
 
-    /// <summary>Copyright holder name.</summary>
+    /// <summary>Name of the copyright holder.</summary>
     public string HolderName { get; }
+
+    /// <summary>
+    /// The contact address of the copyright holder (e.g. <c>jane@example.com</c> or
+    /// <c>https://project.example.com</c>), if present in between angle brackets in the original text. Stored without
+    /// the angle brackets.
+    /// </summary>
+    public string? ContactAddress { get; }
 
     /// <summary>A copyright notice with all its parsed information, when possible.</summary>
     /// <param name="fullText">Full text of the copyright notice, as presented in the original document.</param>
-    /// <param name="holderName">Copyright holder name.</param>
+    /// <param name="holderName">Name of the copyright holder.</param>
     /// <param name="years">Years of publication, if present in the original text.</param>
+    /// <param name="contactAddress">
+    /// The contact address of the copyright holder, if present in between angle brackets in the original text. Stored
+    /// without the angle brackets.
+    /// </param>
     /// <remarks>
     /// <para>
     ///     This does the best effort to parse and store the copyright notice according to the
@@ -117,11 +156,13 @@ public class CopyrightNotice
     internal CopyrightNotice(
         string fullText,
         IReadOnlyList<YearItem> years,
-        string holderName)
+        string holderName,
+        string? contactAddress)
     {
         FullText = fullText;
         HolderName = holderName;
         Years = years;
+        ContactAddress = contactAddress;
     }
 
     /// <inheritdoc/>
