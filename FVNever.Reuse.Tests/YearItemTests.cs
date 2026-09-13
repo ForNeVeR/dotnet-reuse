@@ -101,6 +101,15 @@ public class YearItemTests
     }
 
     [Fact]
+    public void MergeCompactMaxValue()
+    {
+        DoTestCompact(
+            [new SingleYear(int.MaxValue)],
+            [new SingleYear(int.MaxValue)],
+            [new SingleYear(int.MaxValue)]);
+    }
+
+    [Fact]
     public void MergeCompactUnsortedInput()
     {
         DoTestCompact(

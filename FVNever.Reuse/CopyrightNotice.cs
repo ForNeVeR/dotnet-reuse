@@ -238,7 +238,7 @@ public class CopyrightNotice
             {
                 if (current is var (currentStart, currentEnd))
                 {
-                    if (start <= currentEnd + 1)
+                    if (start <= (long)currentEnd + 1)
                     {
                         current = (currentStart, Math.Max(currentEnd, end));
                         continue;
