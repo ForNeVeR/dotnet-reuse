@@ -4,6 +4,7 @@
 
 using System.Text;
 using FVNever.Reuse.Dep5;
+using FVNever.Reuse.ReuseToml;
 using GitignoreParserNet;
 using JetBrains.Annotations;
 using Microsoft.Extensions.FileSystemGlobbing;
@@ -13,7 +14,7 @@ namespace FVNever.Reuse;
 
 /// <summary>
 /// Provides high-level operations for scanning a directory and extracting REUSE licensing information
-/// from files, sidecar <c>.license</c> files, and DEP-5 metadata.
+/// from files, sidecar <c>.license</c> files, <c>REUSE.toml</c> files, and DEP-5 metadata.
 /// </summary>
 [PublicAPI]
 public static class ReuseDirectory
@@ -24,30 +25,54 @@ public static class ReuseDirectory
     /// <param name="directory">Absolute path to the base directory to scan.</param>
     /// <returns>
     /// A task that produces a list of <see cref="ReuseFileEntry"/> values. Each entry corresponds to a file
-    /// for which licensing information was found in-place, in a sidecar <c>.license</c> file, or via a matching DEP-5 stanza.
+    /// for which licensing information was found in-place, in a sidecar <c>.license</c> file, via matching
+    /// <c>REUSE.toml</c> annotations, or via a matching DEP-5 stanza.
     /// </returns>
+    /// <exception cref="Exception">
+    /// A <c>REUSE.toml</c> file is invalid, or both <c>REUSE.toml</c> and <c>.reuse/dep5</c> files are present in the
+    /// directory, which is prohibited by the REUSE specification.
+    /// </exception>
     /// <remarks>
-    /// Note that for related formats that don't follow the REUSE specification strictly, e.g., the
-    /// <a href="https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/">DEP5 machine-readable
-    /// <c>debian/copyright</c> file contents</a>, this method does its best to parse the copyright notices in the
-    /// typical form they are provided, but can't guarantee their correctness.
+    /// <para>
+    ///     <c>REUSE.toml</c> files are read from any directory level (except the ones ignored by VCS), and the
+    ///     licensing information from them is combined with the information from the files according to the
+    ///     <c>precedence</c> rules from <a href="https://reuse.software/spec-3.3/#reusetoml">the specification</a>.
+    /// </para>
+    /// <para>
+    ///     Note that for related formats that don't follow the REUSE specification strictly, e.g., the
+    ///     <a href="https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/">DEP5 machine-readable
+    ///     <c>debian/copyright</c> file contents</a>, this method does its best to parse the copyright notices in the
+    ///     typical form they are provided, but can't guarantee their correctness.
+    /// </para>
     /// </remarks>
     public static async Task<List<ReuseFileEntry>> ReadEntries(AbsolutePath directory)
     {
         var allFiles = await EnumerateFiles(directory).ConfigureAwait(false);
+        var reuseToml = await ReadReuseTomlFiles(allFiles).ConfigureAwait(false);
+        var dep5Path = GetDep5Path(directory);
+        if (!reuseToml.IsEmpty && File.Exists(dep5Path.Value))
+            throw new Exception(
+                $"Both \"{dep5Path}\" and {ReuseTomlFile.FileName} files are present in directory \"{directory}\". " +
+                "According to the REUSE specification, they must not be used simultaneously.");
+
         var dep5 = await ReadDep5File(directory).ConfigureAwait(false);
         var results = await Task.WhenAll(allFiles.Select(async file =>
         {
-            var entry = await ReuseFileEntry.ReadFromFile(file).ConfigureAwait(false);
-            if (entry != null)
-                return entry;
-            entry = await ReuseFileEntry.ReadFromFile(new AbsolutePath(file.Value + ".license")).ConfigureAwait(false);
-            if (entry != null)
-                return entry with { Path = file };
-
-            return FindDep5Entry(dep5, directory, file);
+            var localEntry = await ReadLocalEntry(file).ConfigureAwait(false);
+            return reuseToml.IsEmpty
+                ? localEntry ?? FindDep5Entry(dep5, directory, file)
+                : reuseToml.Resolve(file, localEntry);
         })).ConfigureAwait(false);
         return results.Where(x => x != null).ToList()!;
+    }
+
+    private static async Task<ReuseFileEntry?> ReadLocalEntry(AbsolutePath file)
+    {
+        var entry = await ReuseFileEntry.ReadFromFile(file).ConfigureAwait(false);
+        if (entry != null)
+            return entry;
+        entry = await ReuseFileEntry.ReadFromFile(new AbsolutePath(file.Value + ".license")).ConfigureAwait(false);
+        return entry == null ? null : entry with { Path = file };
     }
 
     private static async Task<List<AbsolutePath>> EnumerateFiles(AbsolutePath directory)
@@ -81,9 +106,22 @@ public static class ReuseDirectory
             .ToList();
     }
 
+    private static async Task<NestedReuseToml> ReadReuseTomlFiles(IEnumerable<AbsolutePath> files)
+    {
+        // Note that the files ignored by VCS are already filtered out by EnumerateFiles, as the spec requires.
+        var tomlFiles = await Task.WhenAll(
+            files
+                .Where(file => file.FileName == ReuseTomlFile.FileName)
+                .Select(ReuseTomlFile.ReadFile)
+        ).ConfigureAwait(false);
+        return new NestedReuseToml(tomlFiles);
+    }
+
+    private static AbsolutePath GetDep5Path(AbsolutePath directory) => directory / ".reuse/dep5";
+
     private static async Task<List<DebianCopyrightFilesEntry>> ReadDep5File(AbsolutePath directory)
     {
-        var dep5Path = directory / ".reuse/dep5";
+        var dep5Path = GetDep5Path(directory);
         if (!File.Exists(dep5Path.Value))
             return [];
 
