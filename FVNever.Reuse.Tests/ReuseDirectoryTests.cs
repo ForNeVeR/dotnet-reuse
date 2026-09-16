@@ -46,6 +46,8 @@ public class ReuseDirectoryTests
 
         var entries = await ReadEntries(dir);
 
+        Assert.DoesNotContain("REUSE.toml", entries.Keys);
+        Assert.DoesNotContain("sub/REUSE.toml", entries.Keys);
         AssertEntry(entries["plain.txt"], ["MIT"], ["2026 Root Holder"]);
         AssertEntry(entries["header.cs"], ["Apache-2.0"], ["2026 Header Holder"]);
         AssertEntry(entries["sub/data.bin"], ["CC0-1.0", "MIT"], ["2026 Sub Holder", "2026 Root Holder"]);

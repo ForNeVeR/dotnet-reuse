@@ -2,12 +2,9 @@
 //
 // SPDX-License-Identifier: MIT
 
-using System.Text;
 using FVNever.Reuse.Dep5;
 using FVNever.Reuse.ReuseToml;
 using GitignoreParserNet;
-using JetBrains.Annotations;
-using Microsoft.Extensions.FileSystemGlobbing;
 using TruePath;
 
 namespace FVNever.Reuse;
@@ -37,6 +34,7 @@ public static class ReuseDirectory
     ///     <c>REUSE.toml</c> files are read from any directory level (except the ones ignored by VCS), and the
     ///     licensing information from them is combined with the information from the files according to the
     ///     <c>precedence</c> rules from <a href="https://reuse.software/spec-3.3/#reusetoml">the specification</a>.
+    ///     The <c>REUSE.toml</c> files themselves are not Covered Files, so no entries are returned for them.
     /// </para>
     /// <para>
     ///     Note that for related formats that don't follow the REUSE specification strictly, e.g., the
@@ -56,7 +54,9 @@ public static class ReuseDirectory
                 "According to the REUSE specification, they must not be used simultaneously.");
 
         var dep5 = await ReadDep5File(directory).ConfigureAwait(false);
-        var results = await Task.WhenAll(allFiles.Select(async file =>
+        // According to the spec, REUSE.toml files are not Covered Files, so they are not listed.
+        var coveredFiles = allFiles.Where(file => file.FileName != ReuseTomlFile.FileName);
+        var results = await Task.WhenAll(coveredFiles.Select(async file =>
         {
             var localEntry = await ReadLocalEntry(file).ConfigureAwait(false);
             return reuseToml.IsEmpty
