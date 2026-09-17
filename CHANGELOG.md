@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Copyright notices are now represented by `CopyrightNotice` class instead of raw strings.
 
 ### Added
-- `ReuseDirectory.ReadEntries` now supports `REUSE.toml` files, including nested ones and all the `precedence` values (`closest`, `aggregate`, and `override`). If both `REUSE.toml` and `.reuse/dep5` files are present, the method throws an exception, as the REUSE specification prohibits using both. The `REUSE.toml` files themselves are not listed as entries.
+- `ReuseDirectory.ReadEntries` now supports `REUSE.toml` files. If both `REUSE.toml` and `.reuse/dep5` files are present, the method throws an exception, as the REUSE specification prohibits using both. The `REUSE.toml` files themselves are not listed as entries.
 - New methods `CopyrightNotice.YearItem.MergeExpansive` and `CopyrightNotice.YearItem.MergeCompact` to merge year sequences.
 
 ## [1.1.0] - 2025-08-24

@@ -9,6 +9,7 @@ using GitignoreParserNet;
 using JetBrains.Annotations;
 using Microsoft.Extensions.FileSystemGlobbing;
 using TruePath;
+using TruePath.SystemIo;
 
 namespace FVNever.Reuse;
 
@@ -37,7 +38,7 @@ public static class ReuseDirectory
     ///     <c>REUSE.toml</c> files are read from any directory level (except the ones ignored by VCS), and the
     ///     licensing information from them is combined with the information from the files according to the
     ///     <c>precedence</c> rules from <a href="https://reuse.software/spec-3.3/#reusetoml">the specification</a>.
-    ///     The <c>REUSE.toml</c> files themselves are not Covered Files, so no entries are returned for them.
+    ///     The <c>REUSE.toml</c> files themselves are not <b>Covered Files</b>, so no entries are returned for them.
     /// </para>
     /// <para>
     ///     Note that for related formats that don't follow the REUSE specification strictly, e.g., the
@@ -51,7 +52,7 @@ public static class ReuseDirectory
         var allFiles = await EnumerateFiles(directory).ConfigureAwait(false);
         var reuseToml = await ReadReuseTomlFiles(allFiles).ConfigureAwait(false);
         var dep5Path = GetDep5Path(directory);
-        if (!reuseToml.IsEmpty && File.Exists(dep5Path.Value))
+        if (!reuseToml.IsEmpty && dep5Path.ExistsFile())
             throw new Exception(
                 $"Both \"{dep5Path}\" and {ReuseTomlFile.FileName} files are present in directory \"{directory}\". " +
                 "According to the REUSE specification, they must not be used simultaneously.");
@@ -125,7 +126,7 @@ public static class ReuseDirectory
     private static async Task<List<DebianCopyrightFilesEntry>> ReadDep5File(AbsolutePath directory)
     {
         var dep5Path = GetDep5Path(directory);
-        if (!File.Exists(dep5Path.Value))
+        if (!dep5Path.ExistsFile())
             return [];
 
         using var stream = File.OpenText(dep5Path.Value);
