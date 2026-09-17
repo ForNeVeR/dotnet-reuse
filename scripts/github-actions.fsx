@@ -134,6 +134,7 @@ let workflows = [
         onWorkflowDispatch
         dotNetJob "nuget" [
             jobPermission(PermissionKind.Contents, AccessKind.Write)
+            jobPermission(PermissionKind.IdToken, AccessKind.Write)
             runsOn "ubuntu-24.04"
             step(
                 id = "version",
@@ -158,8 +159,18 @@ let workflows = [
                     "path", "./release-notes.md\n./FVNever.Reuse/bin/Release/FVNever.Reuse.${{ steps.version.outputs.version }}.nupkg\n./FVNever.Reuse/bin/Release/FVNever.Reuse.${{ steps.version.outputs.version }}.snupkg"
                 ]
             )
+            let whenPushingTag = "startsWith(github.ref, 'refs/tags/v')"
             step(
-                condition = "startsWith(github.ref, 'refs/tags/v')",
+                condition = whenPushingTag,
+                id = "nuget-login",
+                name = "Log in to NuGet",
+                usesSpec = Auto "NuGet/login",
+                options = Map.ofList [
+                    "user", "${{ secrets.NUGET_USER }}"
+                ]
+            )
+            step(
+                condition = whenPushingTag,
                 name = "Create a release",
                 usesSpec = Auto "softprops/action-gh-release",
                 options = Map.ofList [
@@ -169,9 +180,9 @@ let workflows = [
                 ]
             )
             step(
-                condition = "startsWith(github.ref, 'refs/tags/v')",
+                condition = whenPushingTag,
                 name = "Push artifact to NuGet",
-                run = "dotnet nuget push ./FVNever.Reuse/bin/Release/FVNever.Reuse.${{ steps.version.outputs.version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_TOKEN }}"
+                run = "dotnet nuget push ./FVNever.Reuse/bin/Release/FVNever.Reuse.${{ steps.version.outputs.version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
             )
         ]
     ]
