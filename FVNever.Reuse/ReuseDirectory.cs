@@ -2,9 +2,12 @@
 //
 // SPDX-License-Identifier: MIT
 
+using System.Text;
 using FVNever.Reuse.Dep5;
 using FVNever.Reuse.ReuseToml;
 using GitignoreParserNet;
+using JetBrains.Annotations;
+using Microsoft.Extensions.FileSystemGlobbing;
 using TruePath;
 
 namespace FVNever.Reuse;

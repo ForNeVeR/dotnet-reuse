@@ -60,20 +60,20 @@ public class ReuseDirectoryTests
     [Fact]
     public Task IgnoredReuseTomlIsNotRead() => DoWithTempDir(async dir =>
     {
-        await WriteFile(dir, ".gitignore", "ignored/\n");
-        await WriteFile(dir, "ignored/REUSE.toml", "this is not a valid TOML file");
-        await WriteFile(dir, "plain.txt", "Nothing here.");
+        await WriteFile(dir, ".gitignore", "sub/REUSE.toml\n");
+        await WriteFile(dir, "sub/REUSE.toml", "this is not a valid TOML file");
+        await WriteFile(dir, "sub/plain.txt", "Nothing here.");
         await WriteFile(dir, "REUSE.toml", """
             version = 1
 
             [[annotations]]
-            path = "plain.txt"
+            path = "sub/plain.txt"
             SPDX-License-Identifier = "MIT"
             """);
 
         var entries = await ReadEntries(dir);
 
-        AssertEntry(entries["plain.txt"], ["MIT"], []);
+        AssertEntry(entries["sub/plain.txt"], ["MIT"], []);
     });
 
     [Fact]
@@ -120,7 +120,7 @@ public class ReuseDirectoryTests
     private static async Task WriteFile(AbsolutePath dir, string relativePath, string content)
     {
         var path = dir / relativePath;
-        Directory.CreateDirectory(path.Parent!.Value.Value);
+        path.Parent!.Value.CreateDirectory();
         await path.WriteAllTextAsync(content);
     }
 

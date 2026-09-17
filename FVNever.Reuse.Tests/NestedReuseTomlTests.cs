@@ -10,7 +10,7 @@ namespace FVNever.Reuse.Tests;
 // REUSE-IgnoreStart
 public class NestedReuseTomlTests
 {
-    private static readonly AbsolutePath Root = AbsolutePath.CurrentWorkingDirectory / "project";
+    private static readonly AbsolutePath Root = Temporary.SystemTempDirectory();
     private static readonly AbsolutePath File = Root / "sub/file.txt";
 
     [Fact]

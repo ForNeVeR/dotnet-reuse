@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-using System.Collections.Immutable;
 using TruePath;
 
 namespace FVNever.Reuse.ReuseToml;
@@ -15,10 +14,10 @@ namespace FVNever.Reuse.ReuseToml;
 internal class NestedReuseToml(IEnumerable<ReuseTomlFile> files)
 {
     /// <summary>The files, ordered from the project root to the deepest directory.</summary>
-    private readonly ImmutableArray<ReuseTomlFile> _files = [..files.OrderBy(file => file.Directory.Value.Length)];
+    private readonly IReadOnlyList<ReuseTomlFile> _files = [..files.OrderBy(file => file.Directory.Value.Length)];
 
     /// <summary>Whether there are no <c>REUSE.toml</c> files in the set.</summary>
-    public bool IsEmpty => _files.IsEmpty;
+    public bool IsEmpty => _files.Count == 0;
 
     /// <summary>Resolves the licensing information for the file.</summary>
     /// <param name="file">Absolute path to the file.</param>

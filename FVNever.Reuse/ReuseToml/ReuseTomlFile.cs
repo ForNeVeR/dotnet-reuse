@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using Tomlyn;
 using Tomlyn.Model;
 using TruePath;
+using TruePath.SystemIo;
 
 namespace FVNever.Reuse.ReuseToml;
 
@@ -31,47 +32,47 @@ internal record ReuseTomlFile(AbsolutePath Directory, ImmutableArray<ReuseTomlAn
     /// <param name="path">Absolute path to the file.</param>
     public static async Task<ReuseTomlFile> ReadFile(AbsolutePath path)
     {
-        var text = await File.ReadAllTextAsync(path.Value).ConfigureAwait(false);
-        return Read(text, path.Parent!.Value, path.Value);
+        var text = await path.ReadAllTextAsync().ConfigureAwait(false);
+        return Read(text, path.Parent!.Value, path);
     }
 
     /// <summary>Parses the <c>REUSE.toml</c> file contents.</summary>
     /// <param name="text">The file contents.</param>
     /// <param name="directory">The directory the file is located in.</param>
-    /// <param name="source">The file name to mention in error messages.</param>
+    /// <param name="fileSource">The file name to mention in error messages.</param>
     /// <exception cref="Exception">The text is not valid TOML, or it doesn't follow the specification.</exception>
-    public static ReuseTomlFile Read(string text, AbsolutePath directory, string? source = null)
+    public static ReuseTomlFile Read(string text, AbsolutePath directory, AbsolutePath? fileSource = null)
     {
-        source ??= (directory / FileName).Value;
+        var source = fileSource ?? directory / FileName;
 
         TomlTable document;
         try
         {
             document = TomlSerializer.Deserialize<TomlTable>(text)
-                       ?? throw new Exception($"Cannot parse \"{source}\": empty document.");
+                       ?? throw new Exception($"Cannot parse \"{source.Value}\": empty document.");
         }
         catch (TomlException e)
         {
-            throw new Exception($"Cannot parse \"{source}\": {e.Message}", e);
+            throw new Exception($"Cannot parse \"{source.Value}\": {e.Message}", e);
         }
 
         if (!document.TryGetValue("version", out var version))
-            throw new Exception($"Format error in \"{source}\": the \"version\" key is required.");
+            throw new Exception($"Format error in \"{source.Value}\": the \"version\" key is required.");
         if (version is not long versionNumber)
-            throw new Exception($"Format error in \"{source}\": the \"version\" key should be an integer.");
+            throw new Exception($"Format error in \"{source.Value}\": the \"version\" key should be an integer.");
         if (versionNumber != SupportedVersion)
             throw new Exception(
-                $"Format error in \"{source}\": unsupported version {versionNumber}, only {SupportedVersion} is supported.");
+                $"Format error in \"{source.Value}\": unsupported version {versionNumber}, only {SupportedVersion} is supported.");
 
         if (!document.TryGetValue("annotations", out var annotationsValue))
             return new ReuseTomlFile(directory, []);
         if (annotationsValue is not IEnumerable annotationTables || annotationsValue is string)
-            throw new Exception($"Format error in \"{source}\": \"annotations\" should be an array of tables.");
+            throw new Exception($"Format error in \"{source.Value}\": \"annotations\" should be an array of tables.");
 
         var annotations = annotationTables.Cast<object?>()
             .Select(table => table as TomlTable
                              ?? throw new Exception(
-                                 $"Format error in \"{source}\": \"annotations\" should be an array of tables."))
+                                 $"Format error in \"{source.Value}\": \"annotations\" should be an array of tables."))
             .Select(table => ReadAnnotation(table, source));
         return new ReuseTomlFile(directory, [..annotations]);
     }
@@ -84,10 +85,13 @@ internal record ReuseTomlFile(AbsolutePath Directory, ImmutableArray<ReuseTomlAn
     /// <returns>The table covering the file, or <c>null</c> if there's none.</returns>
     public ReuseTomlAnnotation? FindAnnotation(AbsolutePath file)
     {
+        // TODO: Switch back to AbsolutePath.IsPrefixOf once
+        // https://github.com/ForNeVeR/TruePath/issues/217 is fixed: it currently compares raw strings, so a "sub"
+        // directory would cover a sibling "subx" one.
         if (!new LocalPath(Directory).IsPrefixOf(file))
             return null;
 
-        var relativePath = ((LocalPath)file).RelativeTo(Directory).Value.Replace('\\', '/');
+        var relativePath = file.RelativeTo(Directory);
         for (var i = Annotations.Length - 1; i >= 0; --i)
         {
             if (Annotations[i].Matches(relativePath))
@@ -97,11 +101,11 @@ internal record ReuseTomlFile(AbsolutePath Directory, ImmutableArray<ReuseTomlAn
         return null;
     }
 
-    private static ReuseTomlAnnotation ReadAnnotation(TomlTable table, string source)
+    private static ReuseTomlAnnotation ReadAnnotation(TomlTable table, AbsolutePath source)
     {
         var paths = ReadStringOrList(table, "path", source);
         if (paths.IsEmpty)
-            throw new Exception($"Format error in \"{source}\": the \"path\" key of an annotation is required.");
+            throw new Exception($"Format error in \"{source.Value}\": the \"path\" key of an annotation is required.");
 
         return new ReuseTomlAnnotation(
             [..paths.Select(ReuseTomlGlob.Translate)],
@@ -111,7 +115,7 @@ internal record ReuseTomlFile(AbsolutePath Directory, ImmutableArray<ReuseTomlAn
             ReadStringOrList(table, "SPDX-License-Identifier", source));
     }
 
-    private static ReuseTomlPrecedence ReadPrecedence(TomlTable table, string source)
+    private static ReuseTomlPrecedence ReadPrecedence(TomlTable table, AbsolutePath source)
     {
         if (!table.TryGetValue("precedence", out var value))
             return ReuseTomlPrecedence.Closest;
@@ -122,23 +126,23 @@ internal record ReuseTomlFile(AbsolutePath Directory, ImmutableArray<ReuseTomlAn
             "aggregate" => ReuseTomlPrecedence.Aggregate,
             "override" => ReuseTomlPrecedence.Override,
             _ => throw new Exception(
-                $"Format error in \"{source}\": invalid \"precedence\" value \"{value}\", expected one of " +
+                $"Format error in \"{source.Value}\": invalid \"precedence\" value \"{value}\", expected one of " +
                 "\"closest\", \"aggregate\", or \"override\".")
         };
     }
 
-    private static ImmutableArray<string> ReadStringOrList(TomlTable table, string key, string source)
+    private static ImmutableArray<string> ReadStringOrList(TomlTable table, string key, AbsolutePath source)
     {
         if (!table.TryGetValue(key, out var value))
             return [];
 
         Exception FormatError() =>
-            new($"Format error in \"{source}\": the \"{key}\" key should be a string or an array of strings.");
+            new($"Format error in \"{source.Value}\": the \"{key}\" key should be a string or an array of strings.");
 
         return value switch
         {
             string item => [item],
-            TomlArray array => [..array.Cast<object?>().Select(item => item as string ?? throw FormatError())],
+            TomlArray array => [..array.Select(item => item as string ?? throw FormatError())],
             _ => throw FormatError()
         };
     }

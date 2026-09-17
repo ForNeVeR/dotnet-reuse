@@ -4,6 +4,7 @@
 
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
+using TruePath;
 
 namespace FVNever.Reuse.ReuseToml;
 
@@ -19,8 +20,10 @@ internal record ReuseTomlAnnotation(
     ImmutableArray<string> LicenseIdentifiers)
 {
     /// <summary>Checks whether the table covers the file.</summary>
-    /// <param name="relativePath">
-    /// Path of the file relative to the <c>REUSE.toml</c> directory, with forward slashes as separators.
-    /// </param>
-    public bool Matches(string relativePath) => Paths.Any(path => path.IsMatch(relativePath));
+    /// <param name="relativePath">Path of the file relative to the <c>REUSE.toml</c> directory.</param>
+    public bool Matches(LocalPath relativePath)
+    {
+        var pathStringForMatching = relativePath.Value.Replace(Path.DirectorySeparatorChar, '/');
+        return Paths.Any(path => path.IsMatch(pathStringForMatching));
+    }
 }
