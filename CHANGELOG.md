@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [2.0.0] - 2026-09-18
 ### Changed
 - Copyright notices are now represented by `CopyrightNotice` class instead of raw strings.
+- Update the target framework to .NET 10.
 
 ### Added
 - `ReuseDirectory.ReadEntries` now supports `REUSE.toml` files. If both `REUSE.toml` and `.reuse/dep5` files are present, the method throws an exception, as the REUSE specification prohibits using both. The `REUSE.toml` files themselves are not listed as entries.
