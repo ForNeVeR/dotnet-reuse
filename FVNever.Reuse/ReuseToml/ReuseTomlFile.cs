@@ -108,7 +108,7 @@ internal record ReuseTomlFile(AbsolutePath Directory, ImmutableArray<ReuseTomlAn
             throw new Exception($"Format error in \"{source.Value}\": the \"path\" key of an annotation is required.");
 
         return new ReuseTomlAnnotation(
-            [..paths.Select(ReuseTomlGlob.Translate)],
+            [..paths.Select(path => ReuseTomlGlob.Translate(path, source))],
             ReadPrecedence(table, source),
             [..ReadStringOrList(table, "SPDX-FileCopyrightText", source)
                 .Select(line => CopyrightNotice.ParseNoMandatoryPrefix(line.Trim()))],

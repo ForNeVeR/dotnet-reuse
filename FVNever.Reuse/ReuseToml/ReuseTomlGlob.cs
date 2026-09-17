@@ -4,6 +4,7 @@
 
 using System.Text;
 using System.Text.RegularExpressions;
+using TruePath;
 
 namespace FVNever.Reuse.ReuseToml;
 
@@ -15,12 +16,18 @@ namespace FVNever.Reuse.ReuseToml;
 /// including forward slashes, <c>\*</c> is a verbatim asterisk, <c>\\</c> is a verbatim backslash, and a backslash
 /// followed by any other character is equal to just that character (the backslashes here are already unescaped from
 /// TOML). Matching is case-sensitive.
+/// <para>
+/// The specification has no rule for a glob ending with an unescaped backslash, so such a glob is rejected as a
+/// format error.
+/// </para>
 /// </remarks>
 internal static class ReuseTomlGlob
 {
     /// <summary>Translates the glob into an anchored regular expression.</summary>
     /// <param name="glob">The glob from the <c>path</c> key, with forward slashes as separators.</param>
-    public static Regex Translate(string glob)
+    /// <param name="source">The file the glob comes from, to be mentioned in error messages.</param>
+    /// <exception cref="Exception">The glob ends with an unescaped backslash.</exception>
+    public static Regex Translate(string glob, AbsolutePath? source = null)
     {
         var result = new StringBuilder();
         var characters = new Queue<char>(glob);
@@ -32,10 +39,9 @@ internal static class ReuseTomlGlob
                 case '\\':
                 {
                     if (!characters.TryDequeue(out var next))
-                    {
-                        characters.Enqueue(c);
-                        break;
-                    }
+                        throw new Exception(
+                            (source is { } s ? $"Format error in \"{s.Value}\": " : "Format error: ") +
+                            $"the path glob \"{glob}\" ends with an unescaped backslash.");
 
                     result.Append(Regex.Escape(next.ToString()));
                     break;
