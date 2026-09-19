@@ -54,7 +54,7 @@ let workflows = [
         onWorkflowDispatch
 
         dotNetJob "verify-workflows" [
-            runsOn "ubuntu-24.04"
+            runsOn "ubuntu-26.04"
             step(run = "dotnet fsi ./scripts/github-actions.fsx verify")
         ]
 
@@ -62,8 +62,8 @@ let workflows = [
             strategy(failFast = false, matrix = [
                 "image", [
                     "macos-26"
-                    "ubuntu-24.04"
-                    "ubuntu-24.04-arm"
+                    "ubuntu-26.04"
+                    "ubuntu-26.04-arm"
                     "windows-11-arm"
                     "windows-2025"
                 ]
@@ -82,7 +82,7 @@ let workflows = [
         ]
 
         dotNetJob "check-docs" [
-            runsOn "ubuntu-24.04"
+            runsOn "ubuntu-26.04"
             step(
                 name = "Restore dotnet tools",
                 run = "dotnet tool restore"
@@ -94,12 +94,12 @@ let workflows = [
         ]
 
         dotNetJob "check-all-warnings" [ // separate check not bothering the local compilation
-            runsOn "ubuntu-24.04"
+            runsOn "ubuntu-26.04"
             step(name = "Verify with full warning check", run = "dotnet build -p:AllWarningsMode=true")
         ]
 
         job "licenses" [
-            runsOn "ubuntu-24.04"
+            runsOn "ubuntu-26.04"
             step(
                 name = "Check out the sources",
                 usesSpec = Auto "actions/checkout"
@@ -111,7 +111,7 @@ let workflows = [
         ]
 
         job "encoding" [
-            runsOn "ubuntu-24.04"
+            runsOn "ubuntu-26.04"
             step(
                 name = "Check out the sources",
                 usesSpec = Auto "actions/checkout"
@@ -135,7 +135,7 @@ let workflows = [
         dotNetJob "nuget" [
             jobPermission(PermissionKind.Contents, AccessKind.Write)
             jobPermission(PermissionKind.IdToken, AccessKind.Write)
-            runsOn "ubuntu-24.04"
+            runsOn "ubuntu-26.04"
             step(
                 id = "version",
                 name = "Get version",
@@ -200,7 +200,7 @@ let workflows = [
         )
         dotNetJob "publish-docs" [
             environment(name = "github-pages", url = "${{ steps.deployment.outputs.page_url }}")
-            runsOn "ubuntu-24.04"
+            runsOn "ubuntu-26.04"
 
             step(
                 name = "Set up .NET tools",
